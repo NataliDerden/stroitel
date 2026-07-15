@@ -125,6 +125,21 @@ tbody.sec tr:hover td{background:var(--surface-2)}
 .chip span{color:var(--muted)} .chip b{font-family:var(--mono);color:var(--accent)}
 .pt{font-size:13px;color:var(--muted);margin:10px 0 0;max-width:70ch}
 .hide{display:none !important}
+/* режим «Готовое КП» */
+.viewbar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin:0 0 16px}
+.viewbar .toggle button[aria-pressed="true"]{background:var(--sec);color:#fff}
+.printbtn{display:none;font:inherit;font-weight:600;font-size:14px;border:0;background:var(--accent);color:#fff;padding:9px 18px;border-radius:100px;cursor:pointer}
+.printbtn:hover{filter:brightness(1.05)}
+.kp-view{display:none}
+body.mode-kp .kp-view{display:block}
+body.mode-kp .flow,body.mode-kp .kpis,body.mode-kp .work-view,body.mode-kp .basis{display:none}
+body.mode-kp .printbtn{display:inline-flex}
+.kp-doc-head{padding:22px 22px 4px}
+.kp-title{font-size:22px;font-weight:800;letter-spacing:-.01em}
+.kp-sub{color:var(--muted);font-size:14px;margin-top:4px}
+.kp-foot{padding:14px 22px 20px;color:var(--muted);font-size:12.5px}
+tr.grand td{background:var(--sec);color:#fff;font-weight:800;padding:13px 14px;font-size:15px}
+tr.grand td.num{font-family:var(--mono)}
 .note{display:flex;gap:12px;background:var(--good-soft);border-radius:12px;padding:12px 16px;margin-top:16px;font-size:13px;color:var(--ink)}
 .note b{color:var(--good)}
 .note.draft{background:var(--accent-soft)} .note.draft b{color:var(--accent)}
@@ -139,7 +154,8 @@ tbody.sec tr:hover td{background:var(--surface-2)}
 .ttbl th.num,.ttbl td.num{text-align:right;font-family:var(--mono)}
 .ttbl td{padding:4px 6px;border-bottom:1px solid var(--line)}
 footer{text-align:center;color:var(--muted);font-size:12.5px;margin-top:26px}
-@media print{body{background:#fff}.card,.kpi,.hero,.flow,.basis{box-shadow:none}.toggle{display:none}}
+@media print{body{background:#fff}.card,.kpi,.hero,.flow,.basis{box-shadow:none;border-color:#e5e8ec}
+.toggle,.printbtn,.viewbar,.top,.hero{display:none !important}}
 </style>
 
 <div class="wrap">
@@ -163,6 +179,14 @@ footer{text-align:center;color:var(--muted);font-size:12.5px;margin-top:26px}
     <div class="obj"><span>Объект:</span> <b>Улично-дорожная сеть «Юг Таун»</b> <span>·</span> <span>Регион:</span> <b>Санкт-Петербург</b> <span>·</span> <span>Позиций:</span> <b>31</b></div>
   </section>
 
+  <div class="viewbar">
+    <div class="toggle" role="group" aria-label="Вид">
+      <button id="v-work" aria-pressed="true" onclick="setView('work')">Рабочий вид</button>
+      <button id="v-kp" aria-pressed="false" onclick="setView('kp')">Готовое КП</button>
+    </div>
+    <button class="printbtn" onclick="window.print()">🖨 Печать / Сохранить PDF</button>
+  </div>
+
   <div class="flow">
     <div class="step"><div class="n">01</div><div class="t">Оферта без цен</div><div class="d">позиции + объёмы из тендера</div></div>
     <div class="arrow">→</div>
@@ -178,8 +202,8 @@ footer{text-align:center;color:var(--muted);font-size:12.5px;margin-top:26px}
     <div class="kpi"><div class="l">Позиций / разделов</div><div class="v">31 <small>/ 7</small></div></div>
   </div>
 
-  <div class="card">
-    <div class="card-h"><h3>Смета по разделам</h3><div class="hint">ставки — за единицу, в т.ч. НДС · «только работа» = без материала</div></div>
+  <div class="card work-view">
+    <div class="card-h"><h3>Смета по разделам</h3><div class="hint">рабочий вид: сверить и поправить · ставки за единицу, в т.ч. НДС</div></div>
     <div class="scroll">
       <table>
         <thead><tr>
@@ -491,6 +515,62 @@ footer{text-align:center;color:var(--muted);font-size:12.5px;margin-top:26px}
     </div>
   </div>
 
+  <div class="card kp-view">
+    <div class="kp-doc-head">
+      <div class="kp-title">Коммерческое предложение</div>
+      <div class="kp-sub">на выполнение работ · объект «Улично-дорожная сеть «Юг Таун»» · Санкт-Петербург</div>
+    </div>
+    <div class="scroll">
+      <table>
+        <thead><tr>
+          <th class="rn">№</th><th>Наименование работ</th><th>Ед.</th><th class="num">Кол-во</th>
+          <th class="num">Цена ₽/ед</th><th class="num">Сумма ₽</th>
+        </tr></thead>
+        <tbody class='sec'><tr class='sec-h'><td colspan='5'>Земляные работы (Объем грунта в твердом теле)</td><td class='num sec-sum'>6 766 743 ₽</td></tr><tr><td class='rn'>1</td><td>Разработка грунта с доработкой и погрузкой</td><td class='u'>м3</td><td class='num'>7 378.35</td><td class='num'>300.00</td><td class='num strong'>2 213 505</td></tr>
+<tr><td class='rn'>2</td><td>Перемещение грунта до 1 км, насыпь с уплотнением (под низ благоустройства, в т.ч. разделительная п…</td><td class='u'>м3</td><td class='num'>4 853.79</td><td class='num'>600.00</td><td class='num strong'>2 912 274</td></tr>
+<tr><td class='rn'>3</td><td>Перемещение грунта до 1 км со складированием</td><td class='u'>м3</td><td class='num'>2 524.56</td><td class='num'>650.00</td><td class='num strong'>1 640 964</td></tr>
+</tbody>
+<tbody class='sec'><tr class='sec-h'><td colspan='5'>Устройство асфальтобетонного покрытия проездов (тип 1)</td><td class='num sec-sum'>84 835 033 ₽</td></tr><tr><td class='rn'>4</td><td>Укладка геополотна (сырье - первичный полипропилен) по ГОСТ Р 55028-2012 P не менее 14 кН/м плотно…</td><td class='u'>м2</td><td class='num'>8 312.80</td><td class='num'>190.00</td><td class='num strong'>1 579 432</td></tr>
+<tr><td class='rn'>5</td><td>Устройство рабочего слоя земляного полотна из песка мелкого (Кф&gt;0,5м/c) по ГОСТ 32824-2014 толщино…</td><td class='u'>м2</td><td class='num'>8 312.80</td><td class='num'>1 427.25</td><td class='num strong'>11 864 444</td></tr>
+<tr><td class='rn'>6</td><td>Укладка геополотна (сырье - первичный полипропилен) по ГОСТ Р 55028-2012 P не менее 14 кН/м плотно…</td><td class='u'>м2</td><td class='num'>8 312.80</td><td class='num'>190.00</td><td class='num strong'>1 579 432</td></tr>
+<tr><td class='rn'>7</td><td>Устройство основания из песка средней крупности (Кф 1м/c) по ГОСТ 32824-2014 толщиной 550мм</td><td class='u'>м2</td><td class='num'>8 312.80</td><td class='num'>1 569.98</td><td class='num strong'>13 050 888</td></tr>
+<tr><td class='rn'>8</td><td>Устройство основания из щебеночной смеси с непрерывной гранулометрией 0/63 (Кф 1м/c), размер зерен…</td><td class='u'>м2</td><td class='num'>8 312.80</td><td class='num'>1 652.00</td><td class='num strong'>13 732 746</td></tr>
+<tr><td class='rn'>9</td><td>Укладка асфальтобетона А32Он по ГОСТ Р 58406.2-2020 на БНД 70/100 по ГОСТ 33133-2014 толщиной 90мм</td><td class='u'>м2</td><td class='num'>8 312.80</td><td class='num'>2 087.75</td><td class='num strong'>17 355 048</td></tr>
+<tr><td class='rn'>10</td><td>Укладка асфальтобетона А22Нн по ГОСТ Р 58406.2-2020 на БНД 70/100 по ГОСТ 33133-2014 толщиной 60мм…</td><td class='u'>м2</td><td class='num'>8 312.80</td><td class='num'>1 585.25</td><td class='num strong'>13 177 866</td></tr>
+<tr><td class='rn'>11</td><td>Укладка асфальтобетона А16Вн по ГОСТ Р 58406.2-2020 на габбро-диабазовом щебне по ГОСТ 8267-93 на …</td><td class='u'>м2</td><td class='num'>8 312.80</td><td class='num'>1 503.12</td><td class='num strong'>12 495 178</td></tr>
+</tbody>
+<tbody class='sec'><tr class='sec-h'><td colspan='5'>Устройство асфальтобетонного покрытия тротуаров и велодорожек (тип 2, тип 3)</td><td class='num sec-sum'>26 483 347 ₽</td></tr><tr><td class='rn'>12</td><td>Укладка геополотна (сырье - первичный полипропилен) по ГОСТ Р 55028-2012 P не менее 14 кН/м плотно…</td><td class='u'>м2</td><td class='num'>4 222.90</td><td class='num'>190.00</td><td class='num strong'>802 351</td></tr>
+<tr><td class='rn'>13</td><td>Устройство рабочего слоя земляного полотна из песка мелкого (Кф&gt;0,5м/c) по ГОСТ 32824-2014 толщино…</td><td class='u'>м2</td><td class='num'>4 222.90</td><td class='num'>1 512.89</td><td class='num strong'>6 388 762</td></tr>
+<tr><td class='rn'>14</td><td>Устройство основания из песка средней крупности с содержанием пылевато-глинистой фракции 3% по ГОС…</td><td class='u'>м2</td><td class='num'>4 222.90</td><td class='num'>685.08</td><td class='num strong'>2 893 024</td></tr>
+<tr><td class='rn'>15</td><td>Устройство основания из щебеночной смеси с непрерывной гранулометрией 0/63 (Кф 1м/c), размер зерен…</td><td class='u'>м2</td><td class='num'>4 222.90</td><td class='num'>1 274.40</td><td class='num strong'>5 381 664</td></tr>
+<tr><td class='rn'>16</td><td>Укладка асфальтобетона А5Нл по ГОСТ Р 58406.2-2020 на БНД 70/100 по ГОСТ 33133-2014 толщиной 40мм</td><td class='u'>м2</td><td class='num'>4 222.90</td><td class='num'>1 304.50</td><td class='num strong'>5 508 773</td></tr>
+<tr><td class='rn'>17</td><td>Укладка асфальтобетона А5Вл по ГОСТ Р 58406.2-2020 на БНД 70/100 по ГОСТ 33133-2014 толщиной 40мм …</td><td class='u'>м2</td><td class='num'>4 222.90</td><td class='num'>1 304.50</td><td class='num strong'>5 508 773</td></tr>
+</tbody>
+<tbody class='sec'><tr class='sec-h'><td colspan='5'>Устройство асфальтобетонного покрытия проездов (тип 4)</td><td class='num sec-sum'>1 037 147 ₽</td></tr><tr><td class='rn'>18</td><td>Укладка геополотна (сырье - первичный полипропилен) по ГОСТ Р 55028-2012 P не менее 14 кН/м плотно…</td><td class='u'>м2</td><td class='num'>123.90</td><td class='num'>190.00</td><td class='num strong'>23 541</td></tr>
+<tr><td class='rn'>19</td><td>Устройство рабочего слоя земляного полотна из песка мелкого (Кф&gt;0,5м/c) по ГОСТ 32824-2014 толщино…</td><td class='u'>м2</td><td class='num'>123.90</td><td class='num'>1 769.79</td><td class='num strong'>219 277</td></tr>
+<tr><td class='rn'>20</td><td>Укладка геополотна (сырье - первичный полипропилен) по ГОСТ Р 55028-2012 P не менее 14 кН/м плотно…</td><td class='u'>м2</td><td class='num'>123.90</td><td class='num'>190.00</td><td class='num strong'>23 541</td></tr>
+<tr><td class='rn'>21</td><td>Устройство основания из песка средней крупности (Кф 1м/c) по ГОСТ 32824-2014 толщиной 450мм</td><td class='u'>м2</td><td class='num'>123.90</td><td class='num'>1 284.53</td><td class='num strong'>159 153</td></tr>
+<tr><td class='rn'>22</td><td>Устройство основания из щебеночно-песчаной смеси 0/63 (Кф 1м/c), размер зерен 63 мм по ГОСТ 70458-…</td><td class='u'>м2</td><td class='num'>123.90</td><td class='num'>1 510.40</td><td class='num strong'>187 139</td></tr>
+<tr><td class='rn'>23</td><td>Укладка асфальтобетона А32Нн по ГОСТ Р 58406.2-2020 на БНД 70/100 по ГОСТ 33133-2014 толщиной 80мм</td><td class='u'>м2</td><td class='num'>123.90</td><td class='num'>1 923.00</td><td class='num strong'>238 260</td></tr>
+<tr><td class='rn'>24</td><td>Укладка асфальтобетона А16Вн по ГОСТ Р 58406.2-2020 на габбро-диабазовом щебне по ГОСТ 8267-93 на …</td><td class='u'>м2</td><td class='num'>123.90</td><td class='num'>1 503.12</td><td class='num strong'>186 237</td></tr>
+</tbody>
+<tbody class='sec'><tr class='sec-h'><td colspan='5'>Устройство бортовых камней</td><td class='num sec-sum'>19 718 737 ₽</td></tr><tr><td class='rn'>25</td><td>Устройство бортовых камней ГП1</td><td class='u'>м.пог.</td><td class='num'>2 018.00</td><td class='num'>7 168.75</td><td class='num strong'>14 466 538</td></tr>
+<tr><td class='rn'>26</td><td>Устройство бортовых камней ГП2</td><td class='u'>м.пог.</td><td class='num'>96.00</td><td class='num'>7 735.25</td><td class='num strong'>742 584</td></tr>
+<tr><td class='rn'>27</td><td>Устройство бортовых камней ГП6</td><td class='u'>м.пог.</td><td class='num'>60.00</td><td class='num'>8 301.75</td><td class='num strong'>498 105</td></tr>
+<tr><td class='rn'>28</td><td>Устройство бортовых камней БР 100.20.8</td><td class='u'>м.пог.</td><td class='num'>1 984.00</td><td class='num'>2 021.93</td><td class='num strong'>4 011 511</td></tr>
+</tbody>
+<tbody class='sec'><tr class='sec-h'><td colspan='5'>Устройство дорожного дренажа</td><td class='num sec-sum'>2 572 050 ₽</td></tr><tr><td class='rn'>29</td><td>Устройство дорожного дренажа из дренажных труб по ГОСТ Р 70628.2-2023 d-110мм в фильтре с щебеночн…</td><td class='u'>м.пог.</td><td class='num'>1 023.50</td><td class='num'>2 280.85</td><td class='num strong'>2 334 450</td></tr>
+<tr><td class='rn'>30</td><td>Присоединение к дождеприемным колодцам трубами d-110 мм с пробивкой отверстий в колодце, с вводом …</td><td class='u'>колодец</td><td class='num'>27.00</td><td class='num'>8 800.00</td><td class='num strong'>237 600</td></tr>
+</tbody>
+<tbody class='sec'><tr class='sec-h'><td colspan='5'>Устройство газона, в т.ч. разделительная полоса</td><td class='num sec-sum'>3 677 945 ₽</td></tr><tr><td class='rn'>31</td><td>Устройство газонов с внесением растительного грунта толщиной 150мм и посевом трав</td><td class='u'>м2</td><td class='num'>7 032.40</td><td class='num'>523.00</td><td class='num strong'>3 677 945</td></tr>
+</tbody>
+
+        <tbody><tr class="grand"><td colspan="5">ИТОГО, в т.ч. НДС</td><td class="num">145 091 003 ₽</td></tr></tbody>
+      </table>
+    </div>
+    <div class="kp-foot">Санкт-Петербург · цены действительны на дату составления. Расчёт выполнен на основе проверенных единичных расценок.</div>
+  </div>
+
   <section class="basis">
     <div class="basis-h">
       <h3>Основа расчёта</h3>
@@ -610,5 +690,12 @@ function setMode(m){
   document.getElementById('btn-full').setAttribute('aria-pressed', full);
   document.getElementById('btn-client').setAttribute('aria-pressed', !full);
   document.getElementById('coef-block').classList.toggle('hide', !full);
+}
+function setView(v){
+  var kp = v==='kp';
+  document.getElementById('v-work').setAttribute('aria-pressed', !kp);
+  document.getElementById('v-kp').setAttribute('aria-pressed', kp);
+  document.body.classList.toggle('mode-kp', kp);
+  window.scrollTo({top:0,behavior:'smooth'});
 }
 </script>
