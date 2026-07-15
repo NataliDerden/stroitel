@@ -81,16 +81,21 @@ input.ed.small{width:70px}
 .card-h{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:baseline;justify-content:space-between;padding:17px 20px 3px}
 .card-h h3{margin:0;font-size:17px;font-weight:800}.card-h .hint{font-size:12.5px;color:var(--muted)}
 .scroll{overflow-x:auto;padding:8px 6px 4px}
-table{width:100%;border-collapse:collapse;min-width:680px}
-thead th{font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);font-weight:700;text-align:left;padding:8px 13px;border-bottom:1px solid var(--line);background:var(--surface)}
+table{width:100%;border-collapse:collapse;min-width:680px;border:1px solid var(--line)}
+thead th{font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);font-weight:700;text-align:left;padding:8px 13px;border-bottom:2px solid var(--line);border-right:1px solid var(--line);background:var(--surface)}
+thead th:last-child{border-right:0}
 thead th.num{text-align:right}
 .rn{width:34px;color:var(--muted);font-family:var(--mono);font-size:12px;text-align:right;padding-right:6px!important}
-tbody.sec .sec-h td{background:var(--surface-2);font-weight:800;font-size:13px;padding:10px 13px;border-top:1px solid var(--line)}
+tbody.sec .sec-h td{background:var(--sec);color:var(--sec-ink);font-weight:800;font-size:12.5px;letter-spacing:.02em;padding:9px 13px;border-top:2px solid var(--line)}
+.sec-h .sec-sum{color:#fff}
 .sec-sum{color:var(--accent);font-family:var(--mono)}
-tbody.sec td{padding:8px 13px;border-bottom:1px solid var(--line);font-size:13px;vertical-align:top}
+tbody.sec td{padding:8px 13px;border-bottom:1px solid var(--line);border-right:1px solid var(--line);font-size:13px;vertical-align:top}
+tbody.sec td:last-child{border-right:0}
+tbody.sec tr:not(.sec-h):nth-child(even) td{background:var(--surface-2)}
+tbody.sec tr:not(.sec-h):hover td{background:var(--accent-soft)}
 .pos{max-width:440px}.bd{font-size:11px;color:var(--muted);margin-top:3px;font-family:var(--mono)}
 .u2{color:var(--muted);white-space:nowrap}.strong{font-weight:700}
-tr.miss td{background:var(--accent-soft)}.miss .warn{color:var(--accent-d);font-size:12px}
+tr.miss td{background:var(--accent-soft)!important}.miss .warn{color:var(--accent-d);font-size:12px}
 tr.grand td{background:var(--sec);color:#fff;font-weight:800;padding:13px;font-size:15px}
 tr.grand td.num{font-family:var(--mono)}
 /* KP view */
