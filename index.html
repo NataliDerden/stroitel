@@ -1,0 +1,614 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Расчёт коммерческого предложения — Улично-дорожная сеть «Юг Таун»</title>
+<style>
+:root{
+  --bg:#eaeef2; --surface:#ffffff; --surface-2:#f4f6f9; --ink:#13212e; --muted:#5c6f80;
+  --line:#dbe2e9; --accent:#d9791a; --accent-soft:#fbe9d4; --good:#1f9d63; --good-soft:#e2f3ea;
+  --sec:#0f2637; --sec-ink:#c9d6e2; --shadow:0 1px 2px rgba(16,32,48,.06),0 6px 20px rgba(16,32,48,.05);
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#0c1620; --surface:#14232f; --surface-2:#182b39; --ink:#e8eef4; --muted:#8ba0b2;
+  --line:#243748; --accent:#f0913a; --accent-soft:#3a2a17; --good:#37b478; --good-soft:#152b22;
+  --sec:#0a1a26; --sec-ink:#9fb4c6; --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.28);
+}}
+:root[data-theme="dark"]{
+  --bg:#0c1620; --surface:#14232f; --surface-2:#182b39; --ink:#e8eef4; --muted:#8ba0b2;
+  --line:#243748; --accent:#f0913a; --accent-soft:#3a2a17; --good:#37b478; --good-soft:#152b22;
+  --sec:#0a1a26; --sec-ink:#9fb4c6; --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.28);
+}
+:root[data-theme="light"]{
+  --bg:#eaeef2; --surface:#ffffff; --surface-2:#f4f6f9; --ink:#13212e; --muted:#5c6f80;
+  --line:#dbe2e9; --accent:#d9791a; --accent-soft:#fbe9d4; --good:#1f9d63; --good-soft:#e2f3ea;
+  --sec:#0f2637; --sec-ink:#c9d6e2;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.5;
+  font-feature-settings:"ss01";-webkit-font-smoothing:antialiased}
+.wrap{max-width:1160px;margin:0 auto;padding:clamp(18px,4vw,40px) clamp(14px,3vw,28px) 72px}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+
+/* header */
+.top{display:flex;flex-wrap:wrap;gap:14px 20px;align-items:baseline;justify-content:space-between;margin-bottom:22px}
+.brand{display:flex;align-items:center;gap:11px}
+.mark{width:34px;height:34px;border-radius:9px;background:var(--accent);position:relative;flex:none;box-shadow:var(--shadow)}
+.mark::before{content:"";position:absolute;inset:8px 8px auto 8px;height:4px;border-radius:2px;background:#fff;opacity:.9}
+.mark::after{content:"";position:absolute;inset:auto 8px 8px 8px;height:4px;border-radius:2px;background:#fff;opacity:.55}
+.brand h1{font-size:15px;letter-spacing:.14em;text-transform:uppercase;margin:0;font-weight:700;color:var(--muted)}
+.verified{display:inline-flex;align-items:center;gap:7px;background:var(--good-soft);color:var(--good);
+  font-size:12.5px;font-weight:600;padding:6px 12px;border-radius:100px}
+.verified b{font-family:var(--mono)}
+
+/* hero */
+.hero{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:clamp(20px,3vw,32px);box-shadow:var(--shadow);margin-bottom:16px}
+.eyebrow{font-size:12.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--accent);font-weight:700;margin:0 0 10px}
+.hero h2{font-size:clamp(23px,3.4vw,34px);line-height:1.12;margin:0 0 8px;font-weight:800;letter-spacing:-.02em;text-wrap:balance;max-width:20ch}
+.hero p{margin:0;color:var(--muted);max-width:62ch;font-size:15.5px}
+.obj{margin-top:18px;padding-top:16px;border-top:1px dashed var(--line);display:flex;flex-wrap:wrap;gap:6px 18px;font-size:14px}
+.obj b{color:var(--ink)} .obj span{color:var(--muted)}
+.modebar{margin-top:18px;display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px}
+.mode-label{font-size:13px;color:var(--muted);font-weight:600}
+.offer-note{font-size:12.5px;color:var(--accent);font-weight:600;display:none}
+body.is-offer .offer-note{display:inline}
+body.is-offer .hidable{color:var(--muted);opacity:.7}
+
+/* flow */
+.flow{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:10px;align-items:center;margin:16px 0;
+  background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:18px clamp(14px,2vw,24px);box-shadow:var(--shadow)}
+.step{text-align:center} .step .n{font-family:var(--mono);font-size:12px;color:var(--accent);font-weight:700}
+.step .t{font-weight:700;font-size:14.5px;margin:2px 0 2px} .step .d{font-size:12.5px;color:var(--muted)}
+.arrow{color:var(--muted);font-size:18px;opacity:.5}
+@media(max-width:640px){.flow{grid-template-columns:1fr;gap:14px}.arrow{transform:rotate(90deg)}}
+
+/* KPI */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:16px 0}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px 18px;box-shadow:var(--shadow)}
+.kpi .l{font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.kpi .v{font-family:var(--mono);font-size:clamp(19px,2.4vw,24px);font-weight:600;margin-top:6px;letter-spacing:-.01em}
+.kpi .v small{font-size:13px;color:var(--muted);font-weight:400}
+.kpi.total{background:var(--sec);border-color:var(--sec)} .kpi.total .l{color:var(--sec-ink)}
+.kpi.total .v{color:#fff} .kpi.total .v small{color:var(--sec-ink)}
+.kpi .bar{height:4px;border-radius:2px;margin-top:12px;background:var(--surface-2);overflow:hidden}
+.kpi .bar i{display:block;height:100%;border-radius:2px}
+
+/* table */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);overflow:hidden;margin:16px 0}
+.card-h{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:baseline;justify-content:space-between;padding:18px 20px 4px}
+.card-h h3{margin:0;font-size:17px;font-weight:800;letter-spacing:-.01em}
+.card-h .hint{font-size:12.5px;color:var(--muted)}
+.scroll{overflow-x:auto;padding:10px 6px 6px}
+table{width:100%;border-collapse:collapse;min-width:680px}
+thead th{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:600;
+  text-align:left;padding:8px 14px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--surface)}
+thead th.num{text-align:right}
+.sec-h td{background:var(--surface-2);font-weight:700;font-size:13.5px;padding:10px 14px;color:var(--ink);
+  border-top:1px solid var(--line)}
+.sec-sum{color:var(--accent);font-family:var(--mono)}
+tbody.sec td{padding:9px 14px;border-bottom:1px solid var(--line);font-size:13.5px;vertical-align:top}
+.rn{width:34px;text-align:right;color:var(--muted);font-family:var(--mono);font-size:12px;padding-right:6px !important}
+thead th.rn{text-align:right}
+.pos{max-width:430px} .pname{display:block}
+.bd{font-size:11.5px;color:var(--muted);margin-top:3px;font-family:var(--mono)}
+.u{color:var(--muted);white-space:nowrap}
+.strong{font-weight:700}
+tbody.sec tr:hover td{background:var(--surface-2)}
+.sec-h:hover td{background:var(--surface-2)}
+
+/* основа расчёта */
+.basis{background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);overflow:hidden;margin:16px 0}
+.basis-h{padding:20px 22px 0;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+.basis-h h3{margin:0;font-size:18px;font-weight:800}
+.toggle{display:inline-flex;background:var(--surface-2);border:1px solid var(--line);border-radius:100px;padding:3px;gap:2px}
+.toggle button{font:inherit;font-size:13px;font-weight:600;border:0;background:transparent;color:var(--muted);
+  padding:6px 14px;border-radius:100px;cursor:pointer;transition:.15s}
+.toggle button[aria-pressed="true"]{background:var(--accent);color:#fff}
+.toggle button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.basis-body{padding:16px 22px 24px}
+.method{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+@media(max-width:720px){.method{grid-template-columns:1fr}}
+.method h4{font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin:0 0 10px;font-weight:700}
+.formula{font-family:var(--mono);font-size:13px;background:var(--surface-2);border:1px solid var(--line);
+  border-radius:12px;padding:14px 16px;line-height:1.9}
+.formula .op{color:var(--accent)}
+.mtable{width:100%;border-collapse:collapse;font-size:13.5px}
+.mtable td{padding:6px 8px;border-bottom:1px solid var(--line)}
+.mtable th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:700;padding:4px 8px;border-bottom:1px solid var(--line)}
+.mtable th.num{text-align:right}
+.mtable td.num{text-align:right;font-family:var(--mono)}
+.mtable td.dost{color:var(--muted);font-size:12px}
+.coef-wrap{margin-top:20px;border-top:1px dashed var(--line);padding-top:16px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.chip{display:inline-flex;align-items:center;gap:8px;background:var(--accent-soft);border-radius:100px;padding:6px 12px;font-size:13px}
+.chip span{color:var(--muted)} .chip b{font-family:var(--mono);color:var(--accent)}
+.pt{font-size:13px;color:var(--muted);margin:10px 0 0;max-width:70ch}
+.hide{display:none !important}
+.note{display:flex;gap:12px;background:var(--good-soft);border-radius:12px;padding:12px 16px;margin-top:16px;font-size:13px;color:var(--ink)}
+.note b{color:var(--good)}
+.note.draft{background:var(--accent-soft)} .note.draft b{color:var(--accent)}
+.draft-tag{display:inline-flex;align-items:center;background:var(--accent-soft);color:var(--accent);font-size:12px;font-weight:700;padding:5px 12px;border-radius:100px}
+.tech-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+@media(max-width:720px){.tech-grid{grid-template-columns:1fr}}
+.tw{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--surface-2)}
+.tw-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:8px;font-size:14px}
+.tw-h span{font-size:11.5px;color:var(--muted)}
+.ttbl{width:100%;border-collapse:collapse;font-size:12.5px}
+.ttbl th{font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);text-align:left;padding:3px 6px;border-bottom:1px solid var(--line)}
+.ttbl th.num,.ttbl td.num{text-align:right;font-family:var(--mono)}
+.ttbl td{padding:4px 6px;border-bottom:1px solid var(--line)}
+footer{text-align:center;color:var(--muted);font-size:12.5px;margin-top:26px}
+@media print{body{background:#fff}.card,.kpi,.hero,.flow,.basis{box-shadow:none}.toggle{display:none}}
+</style>
+
+<div class="wrap">
+  <div class="top">
+    <div class="brand"><div class="mark"></div><h1>Расчёт КП · автоматически</h1></div>
+    <div class="verified">Сверено с исходным КП <b>до рубля</b></div>
+  </div>
+
+  <section class="hero">
+    <p class="eyebrow">Автоматизация коммерческих предложений</p>
+    <h2>Оферта без цен → готовый расчёт за минуты</h2>
+    <p>Загружаете оферту заказчика — только позиции и объёмы. Система собирает прямые затраты по каждой позиции из вашей базы расценок и цен материалов с доставкой по Санкт-Петербургу. Ни одной цифры вручную.</p>
+    <div class="modebar">
+      <span class="mode-label">Посмотрите сами:</span>
+      <div class="toggle" role="group" aria-label="Режим">
+        <button id="m-offer" aria-pressed="false" onclick="showMode('offer')">Оферта заказчика</button>
+        <button id="m-calc" aria-pressed="true" onclick="showMode('calc')">Наш расчёт</button>
+      </div>
+      <span class="offer-note">Так приходит тендер — только позиции и объёмы, цен нет. Нажмите «Наш расчёт».</span>
+    </div>
+    <div class="obj"><span>Объект:</span> <b>Улично-дорожная сеть «Юг Таун»</b> <span>·</span> <span>Регион:</span> <b>Санкт-Петербург</b> <span>·</span> <span>Позиций:</span> <b>31</b></div>
+  </section>
+
+  <div class="flow">
+    <div class="step"><div class="n">01</div><div class="t">Оферта без цен</div><div class="d">позиции + объёмы из тендера</div></div>
+    <div class="arrow">→</div>
+    <div class="step"><div class="n">02</div><div class="t">Сборка затрат</div><div class="d">материалы · доставка · работа</div></div>
+    <div class="arrow">→</div>
+    <div class="step"><div class="n">03</div><div class="t">Готовое КП</div><div class="d">цена по каждой позиции</div></div>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi"><div class="l">Работа</div><div class="v hidable">60 511 635 ₽</div><div class="bar"><i style="width:42%;background:var(--muted)"></i></div></div>
+    <div class="kpi"><div class="l">Материалы</div><div class="v hidable">84 579 369 ₽</div><div class="bar"><i style="width:58%;background:var(--accent)"></i></div></div>
+    <div class="kpi total"><div class="l">Прямые затраты, итого</div><div class="v hidable">145 091 003 ₽</div><div class="bar" style="background:rgba(255,255,255,.15)"><i style="width:100%;background:#fff"></i></div></div>
+    <div class="kpi"><div class="l">Позиций / разделов</div><div class="v">31 <small>/ 7</small></div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><h3>Смета по разделам</h3><div class="hint">ставки — за единицу, в т.ч. НДС · «только работа» = без материала</div></div>
+    <div class="scroll">
+      <table>
+        <thead><tr>
+          <th class="rn">№</th><th>Позиция / из чего собрана</th><th>Ед.</th><th class="num">Кол-во</th>
+          <th class="num">Работа ₽/ед</th><th class="num">Матер. ₽/ед</th><th class="num">Сумма ₽</th>
+        </tr></thead>
+        <tbody class="sec">
+<tr class="sec-h"><td colspan="6">Земляные работы (Объем грунта в твердом теле)</td><td class="num sec-sum hidable">6 766 743 ₽</td></tr>
+<tr>
+<td class="rn">1</td>
+<td class="pos"><span class="pname">Разработка грунта с доработкой и погрузкой</span><div class='bd'>только работа</div></td>
+<td class="u">м3</td>
+<td class="num">7 378.35</td>
+<td class="num hidable">300.00</td>
+<td class="num hidable">0.00</td>
+<td class="num strong hidable">2 213 505</td>
+</tr>
+<tr>
+<td class="rn">2</td>
+<td class="pos"><span class="pname">Перемещение грунта до 1 км, насыпь с уплотнением (под низ благоустройства, в т.ч. разделительн…</span><div class='bd'>только работа</div></td>
+<td class="u">м3</td>
+<td class="num">4 853.79</td>
+<td class="num hidable">600.00</td>
+<td class="num hidable">0.00</td>
+<td class="num strong hidable">2 912 274</td>
+</tr>
+<tr>
+<td class="rn">3</td>
+<td class="pos"><span class="pname">Перемещение грунта до 1 км со складированием</span><div class='bd'>только работа</div></td>
+<td class="u">м3</td>
+<td class="num">2 524.56</td>
+<td class="num hidable">650.00</td>
+<td class="num hidable">0.00</td>
+<td class="num strong hidable">1 640 964</td>
+</tr>
+</tbody>
+<tbody class="sec">
+<tr class="sec-h"><td colspan="6">Устройство асфальтобетонного покрытия проездов (тип 1)</td><td class="num sec-sum hidable">84 835 033 ₽</td></tr>
+<tr>
+<td class="rn">4</td>
+<td class="pos"><span class="pname">Укладка геополотна (сырье - первичный полипропилен) по ГОСТ Р 55028-2012 P не менее 14 кН/м пл…</span><div class='bd'>Геополотно · 100 ₽/м2</div></td>
+<td class="u">м2</td>
+<td class="num">8 312.80</td>
+<td class="num hidable">70.00</td>
+<td class="num hidable">120.00</td>
+<td class="num strong hidable">1 579 432</td>
+</tr>
+<tr>
+<td class="rn">5</td>
+<td class="pos"><span class="pname">Устройство рабочего слоя земляного полотна из песка мелкого (Кф&gt;0,5м/c) по ГОСТ 32824-2014 тол…</span><div class='bd'>Песок · 1 300 ₽/м3 · слой 500 мм</div></td>
+<td class="u">м2</td>
+<td class="num">8 312.80</td>
+<td class="num hidable">605.00</td>
+<td class="num hidable">822.25</td>
+<td class="num strong hidable">11 864 444</td>
+</tr>
+<tr>
+<td class="rn">6</td>
+<td class="pos"><span class="pname">Укладка геополотна (сырье - первичный полипропилен) по ГОСТ Р 55028-2012 P не менее 14 кН/м пл…</span><div class='bd'>Геополотно · 100 ₽/м2</div></td>
+<td class="u">м2</td>
+<td class="num">8 312.80</td>
+<td class="num hidable">70.00</td>
+<td class="num hidable">120.00</td>
+<td class="num strong hidable">1 579 432</td>
+</tr>
+<tr>
+<td class="rn">7</td>
+<td class="pos"><span class="pname">Устройство основания из песка средней крупности (Кф 1м/c) по ГОСТ 32824-2014 толщиной 550мм</span><div class='bd'>Песок · 1 300 ₽/м3 · слой 550 мм</div></td>
+<td class="u">м2</td>
+<td class="num">8 312.80</td>
+<td class="num hidable">665.50</td>
+<td class="num hidable">904.48</td>
+<td class="num strong hidable">13 050 888</td>
+</tr>
+<tr>
+<td class="rn">8</td>
+<td class="pos"><span class="pname">Устройство основания из щебеночной смеси с непрерывной гранулометрией 0/63 (Кф 1м/c), размер з…</span><div class='bd'>Щебень · 2 000 ₽/м3 · слой 350 мм</div></td>
+<td class="u">м2</td>
+<td class="num">8 312.80</td>
+<td class="num hidable">770.00</td>
+<td class="num hidable">882.00</td>
+<td class="num strong hidable">13 732 746</td>
+</tr>
+<tr>
+<td class="rn">9</td>
+<td class="pos"><span class="pname">Укладка асфальтобетона А32Он по ГОСТ Р 58406.2-2020 на БНД 70/100 по ГОСТ 33133-2014 толщиной …</span><div class='bd'>Асфальтобетон А32 (Он/Нн) · 6 590 ₽/т · слой 90 мм</div></td>
+<td class="u">м2</td>
+<td class="num">8 312.80</td>
+<td class="num hidable">605.00</td>
+<td class="num hidable">1 482.75</td>
+<td class="num strong hidable">17 355 048</td>
+</tr>
+<tr>
+<td class="rn">10</td>
+<td class="pos"><span class="pname">Укладка асфальтобетона А22Нн по ГОСТ Р 58406.2-2020 на БНД 70/100 по ГОСТ 33133-2014 толщиной …</span><div class='bd'>Асфальтобетон А22Нн · 6 535 ₽/т · слой 60 мм</div></td>
+<td class="u">м2</td>
+<td class="num">8 312.80</td>
+<td class="num hidable">605.00</td>
+<td class="num hidable">980.25</td>
+<td class="num strong hidable">13 177 866</td>
+</tr>
+<tr>
+<td class="rn">11</td>
+<td class="pos"><span class="pname">Укладка асфальтобетона А16Вн по ГОСТ Р 58406.2-2020 на габбро-диабазовом щебне по ГОСТ 8267-93…</span><div class='bd'>Асфальтобетон А16Вн · 7 185 ₽/т · слой 50 мм</div></td>
+<td class="u">м2</td>
+<td class="num">8 312.80</td>
+<td class="num hidable">605.00</td>
+<td class="num hidable">898.12</td>
+<td class="num strong hidable">12 495 178</td>
+</tr>
+</tbody>
+<tbody class="sec">
+<tr class="sec-h"><td colspan="6">Устройство асфальтобетонного покрытия тротуаров и велодорожек (тип 2, тип 3)</td><td class="num sec-sum hidable">26 483 347 ₽</td></tr>
+<tr>
+<td class="rn">12</td>
+<td class="pos"><span class="pname">Укладка геополотна (сырье - первичный полипропилен) по ГОСТ Р 55028-2012 P не менее 14 кН/м пл…</span><div class='bd'>Геополотно · 100 ₽/м2</div></td>
+<td class="u">м2</td>
+<td class="num">4 222.90</td>
+<td class="num hidable">70.00</td>
+<td class="num hidable">120.00</td>
+<td class="num strong hidable">802 351</td>
+</tr>
+<tr>
+<td class="rn">13</td>
+<td class="pos"><span class="pname">Устройство рабочего слоя земляного полотна из песка мелкого (Кф&gt;0,5м/c) по ГОСТ 32824-2014 тол…</span><div class='bd'>Песок · 1 300 ₽/м3 · слой 530 мм</div></td>
+<td class="u">м2</td>
+<td class="num">4 222.90</td>
+<td class="num hidable">641.30</td>
+<td class="num hidable">871.59</td>
+<td class="num strong hidable">6 388 762</td>
+</tr>
+<tr>
+<td class="rn">14</td>
+<td class="pos"><span class="pname">Устройство основания из песка средней крупности с содержанием пылевато-глинистой фракции 3% по…</span><div class='bd'>Песок · 1 300 ₽/м3 · слой 240 мм</div></td>
+<td class="u">м2</td>
+<td class="num">4 222.90</td>
+<td class="num hidable">290.40</td>
+<td class="num hidable">394.68</td>
+<td class="num strong hidable">2 893 024</td>
+</tr>
+<tr>
+<td class="rn">15</td>
+<td class="pos"><span class="pname">Устройство основания из щебеночной смеси с непрерывной гранулометрией 0/63 (Кф 1м/c), размер з…</span><div class='bd'>Щебень · 2 000 ₽/м3 · слой 270 мм</div></td>
+<td class="u">м2</td>
+<td class="num">4 222.90</td>
+<td class="num hidable">594.00</td>
+<td class="num hidable">680.40</td>
+<td class="num strong hidable">5 381 664</td>
+</tr>
+<tr>
+<td class="rn">16</td>
+<td class="pos"><span class="pname">Укладка асфальтобетона А5Нл по ГОСТ Р 58406.2-2020 на БНД 70/100 по ГОСТ 33133-2014 толщиной 4…</span><div class='bd'>Асфальтобетон А5 (Нл/Вл) · 6 995 ₽/т · слой 40 мм</div></td>
+<td class="u">м2</td>
+<td class="num">4 222.90</td>
+<td class="num hidable">605.00</td>
+<td class="num hidable">699.50</td>
+<td class="num strong hidable">5 508 773</td>
+</tr>
+<tr>
+<td class="rn">17</td>
+<td class="pos"><span class="pname">Укладка асфальтобетона А5Вл по ГОСТ Р 58406.2-2020 на БНД 70/100 по ГОСТ 33133-2014 толщиной 4…</span><div class='bd'>Асфальтобетон А5 (Нл/Вл) · 6 995 ₽/т · слой 40 мм</div></td>
+<td class="u">м2</td>
+<td class="num">4 222.90</td>
+<td class="num hidable">605.00</td>
+<td class="num hidable">699.50</td>
+<td class="num strong hidable">5 508 773</td>
+</tr>
+</tbody>
+<tbody class="sec">
+<tr class="sec-h"><td colspan="6">Устройство асфальтобетонного покрытия проездов (тип 4)</td><td class="num sec-sum hidable">1 037 147 ₽</td></tr>
+<tr>
+<td class="rn">18</td>
+<td class="pos"><span class="pname">Укладка геополотна (сырье - первичный полипропилен) по ГОСТ Р 55028-2012 P не менее 14 кН/м пл…</span><div class='bd'>Геополотно · 100 ₽/м2</div></td>
+<td class="u">м2</td>
+<td class="num">123.90</td>
+<td class="num hidable">70.00</td>
+<td class="num hidable">120.00</td>
+<td class="num strong hidable">23 541</td>
+</tr>
+<tr>
+<td class="rn">19</td>
+<td class="pos"><span class="pname">Устройство рабочего слоя земляного полотна из песка мелкого (Кф&gt;0,5м/c) по ГОСТ 32824-2014 тол…</span><div class='bd'>Песок · 1 300 ₽/м3 · слой 620 мм</div></td>
+<td class="u">м2</td>
+<td class="num">123.90</td>
+<td class="num hidable">750.20</td>
+<td class="num hidable">1 019.59</td>
+<td class="num strong hidable">219 277</td>
+</tr>
+<tr>
+<td class="rn">20</td>
+<td class="pos"><span class="pname">Укладка геополотна (сырье - первичный полипропилен) по ГОСТ Р 55028-2012 P не менее 14 кН/м пл…</span><div class='bd'>Геополотно · 100 ₽/м2</div></td>
+<td class="u">м2</td>
+<td class="num">123.90</td>
+<td class="num hidable">70.00</td>
+<td class="num hidable">120.00</td>
+<td class="num strong hidable">23 541</td>
+</tr>
+<tr>
+<td class="rn">21</td>
+<td class="pos"><span class="pname">Устройство основания из песка средней крупности (Кф 1м/c) по ГОСТ 32824-2014 толщиной 450мм</span><div class='bd'>Песок · 1 300 ₽/м3 · слой 450 мм</div></td>
+<td class="u">м2</td>
+<td class="num">123.90</td>
+<td class="num hidable">544.50</td>
+<td class="num hidable">740.03</td>
+<td class="num strong hidable">159 153</td>
+</tr>
+<tr>
+<td class="rn">22</td>
+<td class="pos"><span class="pname">Устройство основания из щебеночно-песчаной смеси 0/63 (Кф 1м/c), размер зерен 63 мм по ГОСТ 70…</span><div class='bd'>Щебень · 2 000 ₽/м3 · слой 320 мм</div></td>
+<td class="u">м2</td>
+<td class="num">123.90</td>
+<td class="num hidable">704.00</td>
+<td class="num hidable">806.40</td>
+<td class="num strong hidable">187 139</td>
+</tr>
+<tr>
+<td class="rn">23</td>
+<td class="pos"><span class="pname">Укладка асфальтобетона А32Нн по ГОСТ Р 58406.2-2020 на БНД 70/100 по ГОСТ 33133-2014 толщиной …</span><div class='bd'>Асфальтобетон А32 (Он/Нн) · 6 590 ₽/т · слой 80 мм</div></td>
+<td class="u">м2</td>
+<td class="num">123.90</td>
+<td class="num hidable">605.00</td>
+<td class="num hidable">1 318.00</td>
+<td class="num strong hidable">238 260</td>
+</tr>
+<tr>
+<td class="rn">24</td>
+<td class="pos"><span class="pname">Укладка асфальтобетона А16Вн по ГОСТ Р 58406.2-2020 на габбро-диабазовом щебне по ГОСТ 8267-93…</span><div class='bd'>Асфальтобетон А16Вн · 7 185 ₽/т · слой 60 мм</div></td>
+<td class="u">м2</td>
+<td class="num">123.90</td>
+<td class="num hidable">605.00</td>
+<td class="num hidable">898.12</td>
+<td class="num strong hidable">186 237</td>
+</tr>
+</tbody>
+<tbody class="sec">
+<tr class="sec-h"><td colspan="6">Устройство бортовых камней</td><td class="num sec-sum hidable">19 718 737 ₽</td></tr>
+<tr>
+<td class="rn">25</td>
+<td class="pos"><span class="pname">Устройство бортовых камней ГП1</span><div class='bd'>Борт ГП1 · 5 669 ₽/м.пог.</div></td>
+<td class="u">м.пог.</td>
+<td class="num">2 018.00</td>
+<td class="num hidable">1 500.00</td>
+<td class="num hidable">5 668.75</td>
+<td class="num strong hidable">14 466 538</td>
+</tr>
+<tr>
+<td class="rn">26</td>
+<td class="pos"><span class="pname">Устройство бортовых камней ГП2</span><div class='bd'>Борт ГП2 · 6 235 ₽/м.пог.</div></td>
+<td class="u">м.пог.</td>
+<td class="num">96.00</td>
+<td class="num hidable">1 500.00</td>
+<td class="num hidable">6 235.25</td>
+<td class="num strong hidable">742 584</td>
+</tr>
+<tr>
+<td class="rn">27</td>
+<td class="pos"><span class="pname">Устройство бортовых камней ГП6</span><div class='bd'>Борт ГП6 · 6 802 ₽/м.пог.</div></td>
+<td class="u">м.пог.</td>
+<td class="num">60.00</td>
+<td class="num hidable">1 500.00</td>
+<td class="num hidable">6 801.75</td>
+<td class="num strong hidable">498 105</td>
+</tr>
+<tr>
+<td class="rn">28</td>
+<td class="pos"><span class="pname">Устройство бортовых камней БР 100.20.8</span><div class='bd'>Борт БР 100.20.8 · 1 088 ₽/м.пог.</div></td>
+<td class="u">м.пог.</td>
+<td class="num">1 984.00</td>
+<td class="num hidable">825.00</td>
+<td class="num hidable">1 196.93</td>
+<td class="num strong hidable">4 011 511</td>
+</tr>
+</tbody>
+<tbody class="sec">
+<tr class="sec-h"><td colspan="6">Устройство дорожного дренажа</td><td class="num sec-sum hidable">2 572 050 ₽</td></tr>
+<tr>
+<td class="rn">29</td>
+<td class="pos"><span class="pname">Устройство дорожного дренажа из дренажных труб по ГОСТ Р 70628.2-2023 d-110мм в фильтре с щебе…</span><div class='bd'>Щебень · 2 000 ₽/м3</div></td>
+<td class="u">м.пог.</td>
+<td class="num">1 023.50</td>
+<td class="num hidable">1 430.00</td>
+<td class="num hidable">850.85</td>
+<td class="num strong hidable">2 334 450</td>
+</tr>
+<tr>
+<td class="rn">30</td>
+<td class="pos"><span class="pname">Присоединение к дождеприемным колодцам трубами d-110 мм с пробивкой отверстий в колодце, с вво…</span><div class='bd'>Песок · 1 300 ₽/м3</div></td>
+<td class="u">колодец</td>
+<td class="num">27.00</td>
+<td class="num hidable">5 500.00</td>
+<td class="num hidable">3 300.00</td>
+<td class="num strong hidable">237 600</td>
+</tr>
+</tbody>
+<tbody class="sec">
+<tr class="sec-h"><td colspan="6">Устройство газона, в т.ч. разделительная полоса</td><td class="num sec-sum hidable">3 677 945 ₽</td></tr>
+<tr>
+<td class="rn">31</td>
+<td class="pos"><span class="pname">Устройство газонов с внесением растительного грунта толщиной 150мм и посевом трав</span><div class='bd'>Грунт растительный · 1 400 ₽/м3 · слой 150 мм</div></td>
+<td class="u">м2</td>
+<td class="num">7 032.40</td>
+<td class="num hidable">250.00</td>
+<td class="num hidable">273.00</td>
+<td class="num strong hidable">3 677 945</td>
+</tr>
+</tbody>
+
+      </table>
+    </div>
+  </div>
+
+  <section class="basis">
+    <div class="basis-h">
+      <h3>Основа расчёта</h3>
+      <div class="toggle" role="group" aria-label="Версия блока">
+        <button id="btn-full" aria-pressed="true" onclick="setMode('full')">Полная</button>
+        <button id="btn-client" aria-pressed="false" onclick="setMode('client')">Для клиента</button>
+      </div>
+    </div>
+    <div class="basis-body">
+      <div class="method">
+        <div>
+          <h4>Как собирается цена позиции</h4>
+          <div class="formula">
+            Материалы<span class="op"> = </span>(цена<span class="op"> + </span>доставка)<span class="op"> × </span>расход<span class="op"> × </span>коэфф.<br>
+            Работа<span class="op"> = </span>база<span class="op"> × </span>коэфф.<span class="op"> × </span>толщина слоя<br>
+            Ставка<span class="op"> = </span>материалы<span class="op"> + </span>работа<span class="op"> × </span>объём
+          </div>
+          <p class="pt">В ставку «работа» входят и труд рабочих, и механизмы — техника (катки, экскаваторы, погрузчики) заложена внутри ставки, как в ваших расценках. Расход и толщина слоёв берутся из проекта конкретного объекта. Накладные и прибыль отдельно не добавляются — по вашей практике они уже учтены в единичных расценках.</p>
+        </div>
+        <div>
+          <h4>Цены материалов · Санкт-Петербург</h4>
+          <table class="mtable"><tr><th>Материал</th><th class="num">Цена</th><th class="num">Доставка</th></tr><tr><td>Асфальтобетон А32 (Он/Нн)</td><td class='num'>5 990 ₽/т</td><td class='num dost'>+ 600 ₽/т</td></tr>
+<tr><td>Асфальтобетон А22Нн</td><td class='num'>5 935 ₽/т</td><td class='num dost'>+ 600 ₽/т</td></tr>
+<tr><td>Асфальтобетон А16Вн</td><td class='num'>6 585 ₽/т</td><td class='num dost'>+ 600 ₽/т</td></tr>
+<tr><td>Асфальтобетон А5 (Нл/Вл)</td><td class='num'>6 395 ₽/т</td><td class='num dost'>+ 600 ₽/т</td></tr>
+<tr><td>Песок</td><td class='num'>1 300 ₽/м3</td><td class='num dost'>—</td></tr>
+<tr><td>Щебень</td><td class='num'>2 000 ₽/м3</td><td class='num dost'>—</td></tr>
+<tr><td>Грунт растительный</td><td class='num'>1 400 ₽/м3</td><td class='num dost'>—</td></tr>
+<tr><td>Геополотно</td><td class='num'>100 ₽/м2</td><td class='num dost'>—</td></tr>
+</table>
+          <p class="pt">Доставка есть только у асфальта — <b>600 ₽ за тонну</b> (подвоз на объект). Число из вашей сметы; зависит от удалённости завода и правится в кабинете.</p>
+        </div>
+      </div>
+
+      <div class="coef-wrap" id="coef-block">
+        <h4>Коэффициенты (постоянные для всех КП)</h4>
+        <div class="chips"><div class='chip'><span>Асфальт</span><b>× 2.5</b></div><div class='chip'><span>Щебень</span><b>× 1.26</b></div><div class='chip'><span>Песок</span><b>× 1.15</b></div><div class='chip'><span>Грунт (газон)</span><b>× 1.3</b></div><div class='chip'><span>Геополотно</span><b>× 1.2</b></div><div class='chip'><span>Работа</span><b>× 1.1</b></div></div>
+        <p class="pt">Это ваша внутренняя надбавка. В версии «Для клиента» этот блок скрыт.</p>
+      </div>
+
+      <div class="note"><b>✓</b><div>Проверка достоверности: пересчёт по этой методике воспроизводит исходное КП «Улично-дорожная сеть «Юг Таун»» точь-в-точь — совпадение до рубля. Значит основа взята верно.</div></div>
+    </div>
+  </section>
+
+  <section class="basis">
+    <div class="basis-h"><h3>Техника и машино-часы</h3><span class="draft-tag">черновик · сверить и поправить</span></div>
+    <div class="basis-body">
+      <div class="note draft"><b>!</b><div>Ориентировочная оценка по типовой практике региона — <b>не из данных заказчика</b>. Набор техники и машино-часы даны как отправная точка: исполнитель сверяет со своим парком и правит. В рабочем кабинете эти нормы <b>редактируются вручную</b> (значение по умолчанию — среднее по региону, рядом поле для правки).</div></div>
+      <div class="tech-grid"><div class="tw">
+      <div class="tw-h"><b>Земляные работы (разработка и перемещение грунта)</b><span>объём 14 757 м³</span></div>
+      <table class="ttbl"><thead><tr><th>Техника</th><th class="num">м-ч / ед</th><th class="num">Ориентир. всего</th></tr></thead>
+      <tbody><tr><td>Экскаватор 1 м³</td><td class='num'>0.025</td><td class='num'>369 м-ч</td></tr>
+<tr><td>Бульдозер</td><td class='num'>0.015</td><td class='num'>221 м-ч</td></tr>
+<tr><td>Самосвал 15 т</td><td class='num'>0.05</td><td class='num'>738 м-ч</td></tr>
+<tr><td>Каток грунтовый</td><td class='num'>0.01</td><td class='num'>148 м-ч</td></tr>
+</tbody></table>
+    </div>
+<div class="tw">
+      <div class="tw-h"><b>Устройство оснований: песок / щебень</b><span>объём — по каждому слою из проекта</span></div>
+      <table class="ttbl"><thead><tr><th>Техника</th><th class="num">м-ч / ед</th><th class="num">Ориентир. всего</th></tr></thead>
+      <tbody><tr><td>Автогрейдер</td><td class='num'>0.004</td><td class='num'>× площадь слоя</td></tr>
+<tr><td>Каток вибрационный</td><td class='num'>0.006</td><td class='num'>× площадь слоя</td></tr>
+<tr><td>Поливомоечная машина</td><td class='num'>0.002</td><td class='num'>× площадь слоя</td></tr>
+<tr><td>Самосвал 15 т</td><td class='num'>0.02</td><td class='num'>× площадь слоя</td></tr>
+</tbody></table>
+    </div>
+<div class="tw">
+      <div class="tw-h"><b>Укладка асфальтобетона</b><span>объём — по каждому слою из проекта</span></div>
+      <table class="ttbl"><thead><tr><th>Техника</th><th class="num">м-ч / ед</th><th class="num">Ориентир. всего</th></tr></thead>
+      <tbody><tr><td>Асфальтоукладчик</td><td class='num'>0.004</td><td class='num'>× площадь слоя</td></tr>
+<tr><td>Каток гладкий</td><td class='num'>0.005</td><td class='num'>× площадь слоя</td></tr>
+<tr><td>Каток пневмоколёсный</td><td class='num'>0.004</td><td class='num'>× площадь слоя</td></tr>
+<tr><td>Самосвал 15 т</td><td class='num'>0.01</td><td class='num'>× площадь слоя</td></tr>
+</tbody></table>
+    </div>
+<div class="tw">
+      <div class="tw-h"><b>Устройство бортовых камней</b><span>объём 4 158 м.пог.</span></div>
+      <table class="ttbl"><thead><tr><th>Техника</th><th class="num">м-ч / ед</th><th class="num">Ориентир. всего</th></tr></thead>
+      <tbody><tr><td>Автокран / погрузчик</td><td class='num'>0.05</td><td class='num'>208 м-ч</td></tr>
+<tr><td>Самосвал 15 т</td><td class='num'>0.02</td><td class='num'>83 м-ч</td></tr>
+</tbody></table>
+    </div>
+<div class="tw">
+      <div class="tw-h"><b>Дорожный дренаж</b><span>объём 1 024 м.пог.</span></div>
+      <table class="ttbl"><thead><tr><th>Техника</th><th class="num">м-ч / ед</th><th class="num">Ориентир. всего</th></tr></thead>
+      <tbody><tr><td>Мини-экскаватор</td><td class='num'>0.08</td><td class='num'>82 м-ч</td></tr>
+<tr><td>Самосвал 15 т</td><td class='num'>0.02</td><td class='num'>20 м-ч</td></tr>
+</tbody></table>
+    </div>
+<div class="tw">
+      <div class="tw-h"><b>Устройство газона</b><span>объём 7 032 м²</span></div>
+      <table class="ttbl"><thead><tr><th>Техника</th><th class="num">м-ч / ед</th><th class="num">Ориентир. всего</th></tr></thead>
+      <tbody><tr><td>Мотокультиватор / малая механизация</td><td class='num'>0.01</td><td class='num'>70 м-ч</td></tr>
+</tbody></table>
+    </div>
+</div>
+    </div>
+  </section>
+
+  <footer>Основа — реально исполненные КП. Все цифры из ваших смет. · Регион: Санкт-Петербург</footer>
+</div>
+
+<script>
+// кэшируем реальные значения, чтобы режим «оферта» их прятал, а «расчёт» возвращал
+document.querySelectorAll('.hidable').forEach(function(el){ el.dataset.v = el.textContent; });
+function showMode(m){
+  var offer = m==='offer';
+  document.getElementById('m-offer').setAttribute('aria-pressed', offer);
+  document.getElementById('m-calc').setAttribute('aria-pressed', !offer);
+  document.body.classList.toggle('is-offer', offer);
+  document.querySelectorAll('.hidable').forEach(function(el){
+    el.textContent = offer ? '—' : el.dataset.v;
+  });
+}
+function setMode(m){
+  var full = m==='full';
+  document.getElementById('btn-full').setAttribute('aria-pressed', full);
+  document.getElementById('btn-client').setAttribute('aria-pressed', !full);
+  document.getElementById('coef-block').classList.toggle('hide', !full);
+}
+</script>
