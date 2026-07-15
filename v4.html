@@ -1,0 +1,356 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Строитель — кабинет расчёта КП</title>
+<style>
+:root{
+  --bg:#eaeef2;--surface:#fff;--surface-2:#f4f6f9;--ink:#13212e;--muted:#5c6f80;--line:#dbe2e9;
+  --accent:#e07b1a;--accent-d:#c86a12;--accent-soft:#fbe9d4;--good:#1f9d63;--good-soft:#e2f3ea;
+  --sec:#0f2637;--sec-ink:#c9d6e2;--shadow:0 1px 2px rgba(16,32,48,.06),0 8px 24px rgba(16,32,48,.06);
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;--sans:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root{--bg:#0c1620;--surface:#14232f;--surface-2:#182b39;--ink:#e8eef4;--muted:#8ba0b2;--line:#263a4c;--accent:#f5952f;--accent-d:#e07b1a;--accent-soft:#3a2a17;--good:#37b478;--good-soft:#152b22;--sec:#0a1a26;--sec-ink:#9fb4c6;}}
+:root[data-theme="dark"]{--bg:#0c1620;--surface:#14232f;--surface-2:#182b39;--ink:#e8eef4;--muted:#8ba0b2;--line:#263a4c;--accent:#f5952f;--accent-d:#e07b1a;--accent-soft:#3a2a17;--good:#37b478;--good-soft:#152b22;--sec:#0a1a26;--sec-ink:#9fb4c6;}
+:root[data-theme="light"]{--bg:#eaeef2;--surface:#fff;--surface-2:#f4f6f9;--ink:#13212e;--muted:#5c6f80;--line:#dbe2e9;--accent:#e07b1a;--accent-soft:#fbe9d4;--good:#1f9d63;--good-soft:#e2f3ea;--sec:#0f2637;--sec-ink:#c9d6e2;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.5;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1180px;margin:0 auto;padding:clamp(16px,3vw,34px) clamp(12px,3vw,26px) 70px}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.top{display:flex;flex-wrap:wrap;gap:12px 18px;align-items:center;justify-content:space-between;margin-bottom:18px}
+.brand{display:flex;align-items:center;gap:11px}
+.mark{width:36px;height:36px;border-radius:9px;background:var(--accent);position:relative;flex:none;box-shadow:var(--shadow)}
+.mark::before{content:"";position:absolute;inset:9px 8px auto 8px;height:4px;border-radius:2px;background:#fff;opacity:.95}
+.mark::after{content:"";position:absolute;inset:auto 8px 9px 8px;height:4px;border-radius:2px;background:#fff;opacity:.55}
+.brand h1{font-size:15px;letter-spacing:.13em;text-transform:uppercase;margin:0;font-weight:800;color:var(--muted)}
+.verified{display:inline-flex;align-items:center;gap:7px;background:var(--good-soft);color:var(--good);font-size:12.5px;font-weight:700;padding:6px 12px;border-radius:100px}
+.verified b{font-family:var(--mono)}
+/* buttons */
+.btn{font:inherit;font-weight:700;font-size:14px;border:0;border-radius:100px;cursor:pointer;padding:11px 22px;display:inline-flex;align-items:center;gap:8px;transition:.13s;text-decoration:none}
+.btn-accent{background:var(--accent);color:#fff;box-shadow:0 2px 10px rgba(224,123,26,.35)}
+.btn-accent:hover{background:var(--accent-d);transform:translateY(-1px)}
+.btn-ghost{background:var(--surface);color:var(--ink);border:1.5px solid var(--line)}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+.btn-dark{background:var(--sec);color:#fff}
+.btn-dark:hover{filter:brightness(1.15)}
+.btn:focus-visible{outline:3px solid var(--accent-soft);outline-offset:2px}
+/* segmented toggle — яркий */
+.seg{display:inline-flex;background:var(--surface-2);border:1.5px solid var(--line);border-radius:100px;padding:4px;gap:3px}
+.seg button{font:inherit;font-size:14px;font-weight:700;border:0;background:transparent;color:var(--accent);padding:9px 20px;border-radius:100px;cursor:pointer;transition:.13s}
+.seg button:hover{background:var(--accent-soft)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:#fff;box-shadow:0 2px 8px rgba(224,123,26,.4)}
+/* hero */
+.hero{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:clamp(18px,3vw,30px);box-shadow:var(--shadow);margin-bottom:14px}
+.eyebrow{font-size:12px;letter-spacing:.13em;text-transform:uppercase;color:var(--accent);font-weight:800;margin:0 0 8px}
+.hero h2{font-size:clamp(21px,3.2vw,31px);line-height:1.13;margin:0 0 8px;font-weight:800;letter-spacing:-.02em;text-wrap:balance;max-width:22ch}
+.hero p{margin:0 0 18px;color:var(--muted);max-width:62ch;font-size:15px}
+.hero-actions{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.obj{margin-top:16px;padding-top:14px;border-top:1px dashed var(--line);display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13.5px}
+.obj b{color:var(--ink)} .obj span{color:var(--muted)}
+#fname{font-size:13px;color:var(--good);font-weight:700}
+/* панель настроек */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);margin:14px 0;overflow:hidden}
+.panel-h{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding:16px 20px;cursor:pointer;user-select:none}
+.panel-h h3{margin:0;font-size:17px;font-weight:800;display:flex;align-items:center;gap:9px}
+.panel-h .sub{font-size:12.5px;color:var(--muted);font-weight:400}
+.chev{transition:.2s;color:var(--muted)}
+.panel.closed .panel-b{display:none}
+.panel.closed .chev{transform:rotate(-90deg)}
+.panel-b{padding:4px 20px 20px}
+.edit-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+@media(max-width:760px){.edit-grid{grid-template-columns:1fr}}
+.edit-grid h4{font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:6px 0 10px;font-weight:800}
+.erow{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:5px 0;border-bottom:1px solid var(--line)}
+.erow label{font-size:13px}
+.erow .u{font-size:11px;color:var(--muted);font-family:var(--mono)}
+input.ed{font:inherit;font-family:var(--mono);font-size:13px;width:92px;text-align:right;padding:7px 9px;border:1.5px solid var(--line);border-radius:8px;background:var(--surface-2);color:var(--ink)}
+input.ed:focus{outline:0;border-color:var(--accent);background:var(--surface);box-shadow:0 0 0 3px var(--accent-soft)}
+input.ed.small{width:70px}
+.crow{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:5px 0;border-bottom:1px solid var(--line)}
+.hintline{font-size:12px;color:var(--muted);margin:12px 0 0}
+.reset{background:none;border:0;color:var(--accent);font:inherit;font-weight:700;font-size:12.5px;cursor:pointer;padding:0}
+/* KPI */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:14px 0}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:15px 17px;box-shadow:var(--shadow)}
+.kpi .l{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.kpi .v{font-family:var(--mono);font-size:clamp(18px,2.3vw,23px);font-weight:600;margin-top:5px}
+.kpi .v small{font-size:12px;color:var(--muted)}
+.kpi.total{background:var(--sec);border-color:var(--sec)}.kpi.total .l{color:var(--sec-ink)}.kpi.total .v{color:#fff}.kpi.total .v small{color:var(--sec-ink)}
+/* toolbar */
+.toolbar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin:0 0 14px}
+/* table card */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);overflow:hidden;margin:14px 0}
+.card-h{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:baseline;justify-content:space-between;padding:17px 20px 3px}
+.card-h h3{margin:0;font-size:17px;font-weight:800}.card-h .hint{font-size:12.5px;color:var(--muted)}
+.scroll{overflow-x:auto;padding:8px 6px 4px}
+table{width:100%;border-collapse:collapse;min-width:680px;border:1.5px solid rgba(120,140,160,.5)}
+thead th{font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);font-weight:700;text-align:left;padding:8px 13px;border-bottom:2px solid rgba(120,140,160,.55);border-right:1px solid rgba(120,140,160,.3);background:var(--surface)}
+thead th:last-child{border-right:0}
+thead th.num{text-align:right}
+.rn{width:34px;color:var(--muted);font-family:var(--mono);font-size:12px;text-align:right;padding-right:6px!important}
+tbody.sec .sec-h td{background:var(--sec);color:var(--sec-ink);font-weight:800;font-size:12.5px;letter-spacing:.02em;padding:9px 13px;border-top:2px solid rgba(120,140,160,.5)}
+.sec-h .sec-sum{color:#fff}
+.sec-sum{color:var(--accent);font-family:var(--mono)}
+tbody.sec td{padding:10px 13px;border-bottom:1.5px solid rgba(88,106,126,.6);border-right:1px solid rgba(120,140,160,.28);font-size:13px;vertical-align:top}
+tbody.sec td:last-child{border-right:0}
+tbody.sec tr:not(.sec-h):nth-child(even) td{background:var(--surface-2)}
+tbody.sec tr:not(.sec-h):hover td{background:var(--accent-soft)}
+.pos{max-width:440px}.bd{font-size:11px;color:var(--muted);margin-top:3px;font-family:var(--mono)}
+.u2{color:var(--muted);white-space:nowrap}.strong{font-weight:700}
+tr.miss td{background:var(--accent-soft)!important}.miss .warn{color:var(--accent-d);font-size:12px}
+tr.grand td{background:var(--sec);color:#fff;font-weight:800;padding:13px;font-size:15px}
+tr.grand td.num{font-family:var(--mono)}
+/* KP view */
+.kp-doc-head{padding:20px 20px 2px}.kp-title{font-size:21px;font-weight:800}.kp-sub{color:var(--muted);font-size:13.5px;margin-top:3px}
+.kp-foot{padding:13px 20px 18px;color:var(--muted);font-size:12px}
+#kpCard{display:none}
+body.mode-kp #workCard,body.mode-kp .kpis,body.mode-kp .panel,body.mode-kp .flow{display:none}
+body.mode-kp #kpCard{display:block}
+footer{text-align:center;color:var(--muted);font-size:12px;margin-top:22px}
+@media print{body{background:#fff}.top,.hero,.panel,.kpis,.toolbar,.seg,.btn{display:none!important}.card{box-shadow:none;border:1px solid #e5e8ec}}
+</style>
+
+<div class="wrap">
+  <div class="top">
+    <div class="brand"><div class="mark"></div><h1>Строитель · кабинет расчёта КП</h1><span style="font-size:10px;font-weight:700;color:#fff;background:var(--good);padding:3px 8px;border-radius:100px">сборка: линии-v4</span></div>
+    <div class="verified">Расчёт сверен с исходным КП <b>до рубля</b></div>
+  </div>
+
+  <section class="hero">
+    <p class="eyebrow">Кабинет расчёта коммерческих предложений</p>
+    <h2>Загрузите оферту — кабинет соберёт цену сам</h2>
+    <p>Оферта заказчика (позиции и объёмы, без цен) превращается в готовое КП. Цены материалов, доставку и коэффициенты вы правите в панели ниже — смета пересчитывается мгновенно.</p>
+    <div class="hero-actions">
+      <label class="btn btn-accent">⬆ Загрузить оферту (Excel)
+        <input id="file" type="file" accept=".xlsx,.xls" style="display:none">
+      </label>
+      <button class="btn btn-ghost" onclick="loadDemo()">Показать пример «Юг Таун»</button>
+      <span id="fname"></span>
+    </div>
+    <div class="obj"><span>Объект:</span> <b id="objName"></b> <span>·</span> <span>Регион:</span> <b id="objReg"></b> <span>·</span> <span>Позиций:</span> <b id="objN"></b></div>
+  </section>
+
+  <section class="panel" id="editPanel">
+    <div class="panel-h" onclick="togglePanel()">
+      <h3>⚙ Цены и коэффициенты <span class="sub">— правьте, всё пересчитается</span></h3>
+      <span class="chev">▾</span>
+    </div>
+    <div class="panel-b">
+      <div class="edit-grid">
+        <div>
+          <h4>Цены материалов · ₽</h4>
+          <div id="matEdit"></div>
+          <p class="hintline">Доставка есть у асфальта (₽ за тонну, подвоз на объект).</p>
+        </div>
+        <div>
+          <h4>Коэффициенты</h4>
+          <div id="coefEdit"></div>
+          <h4 style="margin-top:18px">Доставка по удалённости объекта</h4>
+          <div class="crow"><label>Расстояние до объекта, км <span class="u">справочно</span></label><input class="ed small" id="km" type="number" value="0" oninput="onKm()"></div>
+          <div class="crow"><label>Коэффициент доставки <span class="u">×</span></label><input class="ed small" id="delCoef" type="number" step="0.05" oninput="onEdit()"></div>
+          <p class="hintline">Чем дальше объект — тем выше коэффициент доставки. <button class="reset" onclick="resetAll()">↺ Сбросить к исходным</button></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="toolbar">
+    <div class="seg" role="group" aria-label="Вид">
+      <button id="v-work" aria-pressed="true" onclick="setView('work')">Рабочий вид</button>
+      <button id="v-kp" aria-pressed="false" onclick="setView('kp')">Готовое КП</button>
+    </div>
+    <button class="btn btn-dark" onclick="window.print()">🖨 Печать / Сохранить PDF</button>
+  </div>
+
+  <div class="kpis" id="kpis"></div>
+
+  <div class="card" id="workCard">
+    <div class="card-h"><h3>Смета по разделам</h3><div class="hint">рабочий вид: сверить · ставки за единицу, в т.ч. НДС</div></div>
+    <div class="scroll"><table>
+      <thead><tr><th class="rn">№</th><th>Позиция / из чего собрана</th><th>Ед.</th><th class="num">Кол-во</th><th class="num">Работа ₽/ед</th><th class="num">Матер. ₽/ед</th><th class="num">Сумма ₽</th></tr></thead>
+      <tbody id="workBody"></tbody>
+    </table></div>
+  </div>
+
+  <div class="card" id="kpCard">
+    <div class="kp-doc-head"><div class="kp-title">Коммерческое предложение</div><div class="kp-sub" id="kpSub"></div></div>
+    <div class="scroll"><table>
+      <thead><tr><th class="rn">№</th><th>Наименование работ</th><th>Ед.</th><th class="num">Кол-во</th><th class="num">Цена ₽/ед</th><th class="num">Сумма ₽</th></tr></thead>
+      <tbody id="kpBody"></tbody>
+    </table></div>
+    <div class="kp-foot">Санкт-Петербург · расчёт на основе проверенных единичных расценок. Цены действительны на дату составления.</div>
+  </div>
+
+  <footer>Строитель · цены и коэффициенты — ваши, из реально исполненных смет. Правки сохраняются в этом браузере.</footer>
+</div>
+
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<script>
+const DATA = {"object": "Улично-дорожная сеть «Юг Таун»", "region": "Санкт-Петербург", "materials": {"Асфальтобетон А32 (Он/Нн)": {"price": 5990, "delivery": 600, "unit": "т"}, "Асфальтобетон А22Нн": {"price": 5935, "delivery": 600, "unit": "т"}, "Асфальтобетон А16Вн": {"price": 6585, "delivery": 600, "unit": "т"}, "Асфальтобетон А5 (Нл/Вл)": {"price": 6395, "delivery": 600, "unit": "т"}, "Песок": {"price": 1300, "delivery": 0, "unit": "м3"}, "Щебень": {"price": 2000, "delivery": 0, "unit": "м3"}, "Грунт растительный": {"price": 1400, "delivery": 0, "unit": "м3"}, "Геополотно": {"price": 100, "delivery": 0, "unit": "м2"}, "Борт БР 100.20.8": {"price": 1088.119, "delivery": 0, "unit": "м.пог."}, "Дренажная труба": {"price": 773.5, "delivery": 0, "unit": "м.пог."}, "Присоединение (материал)": {"price": 3000, "delivery": 0, "unit": "колодец"}, "Борт ГП1 (в сборе)": {"price": 5668.75, "delivery": 0, "unit": "м.пог."}, "Борт ГП2 (в сборе)": {"price": 6235.25, "delivery": 0, "unit": "м.пог."}, "Борт ГП6 (в сборе)": {"price": 6801.75, "delivery": 0, "unit": "м.пог."}}, "coefs": {"работа": 1.1, "асфальт": 2.5, "песок": 1.15, "щебень": 1.26, "грунт": 1.3, "геополотно": 1.2}, "positions": [{"i": 1, "section": "Земляные работы (Объем грунта в твердом теле)", "name": "Разработка грунта с доработкой и погрузкой", "unit": "м3", "qty": 7378.35, "material": null, "rash": 0, "matCoefs": [], "workBase": 300, "workCoefs": [], "workMult": 1.0}, {"i": 2, "section": "Земляные работы (Объем грунта в твердом теле)", "name": "Перемещение грунта до 1 км, насыпь с уплотнением (под низ благоустройства, в т.ч. разделительная полоса)", "unit": "м3", "qty": 4853.79, "material": null, "rash": 0, "matCoefs": [], "workBase": 600, "workCoefs": [], "workMult": 1.0}, {"i": 3, "section": "Земляные работы (Объем грунта в твердом теле)", "name": "Перемещение грунта до 1 км со складированием", "unit": "м3", "qty": 2524.56, "material": null, "rash": 0, "matCoefs": [], "workBase": 650, "workCoefs": [], "workMult": 1.0}, {"i": 4, "section": "Устройство асфальтобетонного покрытия проездов (тип 1)", "name": "Укладка геополотна (сырье - первичный полипропилен) по ГОСТ Р 55028-2012 P не менее 14 кН/м плотностью 250 г/м²", "unit": "м2", "qty": 8312.8, "material": "Геополотно", "rash": 1.0, "matCoefs": ["геополотно"], "workBase": 70, "workCoefs": [], "workMult": 1.0}, {"i": 5, "section": "Устройство асфальтобетонного покрытия проездов (тип 1)", "name": "Устройство рабочего слоя земляного полотна из песка мелкого (Кф>0,5м/c) по ГОСТ 32824-2014 толщиной 500мм", "unit": "м2", "qty": 8312.8, "material": "Песок", "rash": 0.5, "matCoefs": ["работа", "песок"], "workBase": 1100, "workCoefs": ["работа"], "workMult": 0.5}, {"i": 6, "section": "Устройство асфальтобетонного покрытия проездов (тип 1)", "name": "Укладка геополотна (сырье - первичный полипропилен) по ГОСТ Р 55028-2012 P не менее 14 кН/м плотностью 250 г/м²", "unit": "м2", "qty": 8312.8, "material": "Геополотно", "rash": 1.0, "matCoefs": ["геополотно"], "workBase": 70, "workCoefs": [], "workMult": 1.0}, {"i": 7, "section": "Устройство асфальтобетонного покрытия проездов (тип 1)", "name": "Устройство основания из песка средней крупности (Кф 1м/c) по ГОСТ 32824-2014 толщиной 550мм", "unit": "м2", "qty": 8312.8, "material": "Песок", "rash": 0.55, "matCoefs": ["работа", "песок"], "workBase": 1100, "workCoefs": ["работа"], "workMult": 0.55}, {"i": 8, "section": "Устройство асфальтобетонного покрытия проездов (тип 1)", "name": "Устройство основания из щебеночной смеси с непрерывной гранулометрией 0/63 (Кф 1м/c), размер зерен 63 мм по ГОСТ 70458-2022 толщиной 350мм", "unit": "м2", "qty": 8312.8, "material": "Щебень", "rash": 0.35, "matCoefs": ["щебень"], "workBase": 2000, "workCoefs": ["работа"], "workMult": 0.35}, {"i": 9, "section": "Устройство асфальтобетонного покрытия проездов (тип 1)", "name": "Укладка асфальтобетона А32Он по ГОСТ Р 58406.2-2020 на БНД 70/100 по ГОСТ 33133-2014 толщиной 90мм", "unit": "м2", "qty": 8312.8, "material": "Асфальтобетон А32 (Он/Нн)", "rash": 0.09, "matCoefs": ["асфальт"], "workBase": 550, "workCoefs": ["работа"], "workMult": 1.0}, {"i": 10, "section": "Устройство асфальтобетонного покрытия проездов (тип 1)", "name": "Укладка асфальтобетона А22Нн по ГОСТ Р 58406.2-2020 на БНД 70/100 по ГОСТ 33133-2014 толщиной 60мм (с предварительным проливом битумной эмульсией 0,4 л/м2)", "unit": "м2", "qty": 8312.8, "material": "Асфальтобетон А22Нн", "rash": 0.06, "matCoefs": ["асфальт"], "workBase": 550, "workCoefs": ["работа"], "workMult": 1.0}, {"i": 11, "section": "Устройство асфальтобетонного покрытия проездов (тип 1)", "name": "Укладка асфальтобетона А16Вн по ГОСТ Р 58406.2-2020 на габбро-диабазовом щебне по ГОСТ 8267-93 на ПБВ 60 по ГОСТ Р 52056-2003 толщиной 50мм (с предварительным проливом битумной эмульсией 0,4 л/м2)", "unit": "м2", "qty": 8312.8, "material": "Асфальтобетон А16Вн", "rash": 0.05, "matCoefs": ["асфальт"], "workBase": 550, "workCoefs": ["работа"], "workMult": 1.0}, {"i": 12, "section": "Устройство асфальтобетонного покрытия тротуаров и велодорожек (тип 2, тип 3)", "name": "Укладка геополотна (сырье - первичный полипропилен) по ГОСТ Р 55028-2012 P не менее 14 кН/м плотностью 250 г/м²", "unit": "м2", "qty": 4222.9, "material": "Геополотно", "rash": 1.0, "matCoefs": ["геополотно"], "workBase": 70, "workCoefs": [], "workMult": 1.0}, {"i": 13, "section": "Устройство асфальтобетонного покрытия тротуаров и велодорожек (тип 2, тип 3)", "name": "Устройство рабочего слоя земляного полотна из песка мелкого (Кф>0,5м/c) по ГОСТ 32824-2014 толщиной 530мм", "unit": "м2", "qty": 4222.9, "material": "Песок", "rash": 0.53, "matCoefs": ["работа", "песок"], "workBase": 1100, "workCoefs": ["работа"], "workMult": 0.53}, {"i": 14, "section": "Устройство асфальтобетонного покрытия тротуаров и велодорожек (тип 2, тип 3)", "name": "Устройство основания из песка средней крупности с содержанием пылевато-глинистой фракции 3% по ГОСТ 32824-2014 толщиной 240мм", "unit": "м2", "qty": 4222.9, "material": "Песок", "rash": 0.24, "matCoefs": ["работа", "песок"], "workBase": 1100, "workCoefs": ["работа"], "workMult": 0.24}, {"i": 15, "section": "Устройство асфальтобетонного покрытия тротуаров и велодорожек (тип 2, тип 3)", "name": "Устройство основания из щебеночной смеси с непрерывной гранулометрией 0/63 (Кф 1м/c), размер зерен 63 мм по ГОСТ 70458-2022 толщиной 270мм", "unit": "м2", "qty": 4222.9, "material": "Щебень", "rash": 0.27, "matCoefs": ["щебень"], "workBase": 2000, "workCoefs": ["работа"], "workMult": 0.27}, {"i": 16, "section": "Устройство асфальтобетонного покрытия тротуаров и велодорожек (тип 2, тип 3)", "name": "Укладка асфальтобетона А5Нл по ГОСТ Р 58406.2-2020 на БНД 70/100 по ГОСТ 33133-2014 толщиной 40мм", "unit": "м2", "qty": 4222.9, "material": "Асфальтобетон А5 (Нл/Вл)", "rash": 0.04, "matCoefs": ["асфальт"], "workBase": 550, "workCoefs": ["работа"], "workMult": 1.0}, {"i": 17, "section": "Устройство асфальтобетонного покрытия тротуаров и велодорожек (тип 2, тип 3)", "name": "Укладка асфальтобетона А5Вл по ГОСТ Р 58406.2-2020 на БНД 70/100 по ГОСТ 33133-2014 толщиной 40мм (с предварительным проливом битумной эмульсией 0,4 л/м2)", "unit": "м2", "qty": 4222.9, "material": "Асфальтобетон А5 (Нл/Вл)", "rash": 0.04, "matCoefs": ["асфальт"], "workBase": 550, "workCoefs": ["работа"], "workMult": 1.0}, {"i": 18, "section": "Устройство асфальтобетонного покрытия проездов (тип 4)", "name": "Укладка геополотна (сырье - первичный полипропилен) по ГОСТ Р 55028-2012 P не менее 14 кН/м плотностью 250 г/м²", "unit": "м2", "qty": 123.9, "material": "Геополотно", "rash": 1.0, "matCoefs": ["геополотно"], "workBase": 70, "workCoefs": [], "workMult": 1.0}, {"i": 19, "section": "Устройство асфальтобетонного покрытия проездов (тип 4)", "name": "Устройство рабочего слоя земляного полотна из песка мелкого (Кф>0,5м/c) по ГОСТ 32824-2014 толщиной 620мм", "unit": "м2", "qty": 123.9, "material": "Песок", "rash": 0.62, "matCoefs": ["работа", "песок"], "workBase": 1100, "workCoefs": ["работа"], "workMult": 0.62}, {"i": 20, "section": "Устройство асфальтобетонного покрытия проездов (тип 4)", "name": "Укладка геополотна (сырье - первичный полипропилен) по ГОСТ Р 55028-2012 P не менее 14 кН/м плотностью 250 г/м²", "unit": "м2", "qty": 123.9, "material": "Геополотно", "rash": 1.0, "matCoefs": ["геополотно"], "workBase": 70, "workCoefs": [], "workMult": 1.0}, {"i": 21, "section": "Устройство асфальтобетонного покрытия проездов (тип 4)", "name": "Устройство основания из песка средней крупности (Кф 1м/c) по ГОСТ 32824-2014 толщиной 450мм", "unit": "м2", "qty": 123.9, "material": "Песок", "rash": 0.45, "matCoefs": ["работа", "песок"], "workBase": 1100, "workCoefs": ["работа"], "workMult": 0.45}, {"i": 22, "section": "Устройство асфальтобетонного покрытия проездов (тип 4)", "name": "Устройство основания из щебеночно-песчаной смеси 0/63 (Кф 1м/c), размер зерен 63 мм по ГОСТ 70458-2022 толщиной 320мм", "unit": "м2", "qty": 123.9, "material": "Щебень", "rash": 0.32, "matCoefs": ["щебень"], "workBase": 2000, "workCoefs": ["работа"], "workMult": 0.32}, {"i": 23, "section": "Устройство асфальтобетонного покрытия проездов (тип 4)", "name": "Укладка асфальтобетона А32Нн по ГОСТ Р 58406.2-2020 на БНД 70/100 по ГОСТ 33133-2014 толщиной 80мм", "unit": "м2", "qty": 123.9, "material": "Асфальтобетон А32 (Он/Нн)", "rash": 0.08, "matCoefs": ["асфальт"], "workBase": 550, "workCoefs": ["работа"], "workMult": 1.0}, {"i": 24, "section": "Устройство асфальтобетонного покрытия проездов (тип 4)", "name": "Укладка асфальтобетона А16Вн по ГОСТ Р 58406.2-2020 на габбро-диабазовом щебне по ГОСТ 8267-93 на ПБВ 60 по ГОСТ Р 52056-2003 толщиной 60мм (с предварительным проливом битумной эмульсией 0,4 л/м2)", "unit": "м2", "qty": 123.9, "material": "Асфальтобетон А16Вн", "rash": 0.05, "matCoefs": ["асфальт"], "workBase": 550, "workCoefs": ["работа"], "workMult": 1.0}, {"i": 25, "section": "Устройство бортовых камней", "name": "Устройство бортовых камней ГП1", "unit": "м.пог.", "qty": 2018.0, "material": "Борт ГП1 (в сборе)", "rash": 1.0, "matCoefs": [], "workBase": 1500, "workCoefs": [], "workMult": 1.0}, {"i": 26, "section": "Устройство бортовых камней", "name": "Устройство бортовых камней ГП2", "unit": "м.пог.", "qty": 96.0, "material": "Борт ГП2 (в сборе)", "rash": 1.0, "matCoefs": [], "workBase": 1500, "workCoefs": [], "workMult": 1.0}, {"i": 27, "section": "Устройство бортовых камней", "name": "Устройство бортовых камней ГП6", "unit": "м.пог.", "qty": 60.0, "material": "Борт ГП6 (в сборе)", "rash": 1.0, "matCoefs": [], "workBase": 1500, "workCoefs": [], "workMult": 1.0}, {"i": 28, "section": "Устройство бортовых камней", "name": "Устройство бортовых камней БР 100.20.8", "unit": "м.пог.", "qty": 1984.0, "material": "Борт БР 100.20.8", "rash": 1.0, "matCoefs": ["работа"], "workBase": 750, "workCoefs": ["работа"], "workMult": 1.0}, {"i": 29, "section": "Устройство дорожного дренажа", "name": "Устройство дорожного дренажа из дренажных труб по ГОСТ Р 70628.2-2023 d-110мм в фильтре с щебеночным основанием, обваловкой щебнем, устройством защитно-дренирующей прослойки из нетканого иглопробивного материала", "unit": "м.пог.", "qty": 1023.5, "material": "Щебень", "rash": 0.337639, "matCoefs": ["щебень"], "workBase": 2000, "workCoefs": ["работа"], "workMult": 0.65}, {"i": 30, "section": "Устройство дорожного дренажа", "name": "Присоединение к дождеприемным колодцам трубами d-110 мм с пробивкой отверстий в колодце, с вводом труб в колодец и заделкой пазов труб цементно-песчаным раствором 1:3", "unit": "колодец", "qty": 27.0, "material": "Песок", "rash": 2.006689, "matCoefs": ["работа", "песок"], "workBase": 1100, "workCoefs": ["работа"], "workMult": 4.545455}, {"i": 31, "section": "Устройство газона, в т.ч. разделительная полоса", "name": "Устройство газонов с внесением растительного грунта толщиной 150мм и посевом трав", "unit": "м2", "qty": 7032.4, "material": "Грунт растительный", "rash": 0.15, "matCoefs": ["грунт"], "workBase": 250, "workCoefs": [], "workMult": 1.0}], "deliveryCoef": 1.0, "matShow": ["Асфальтобетон А32 (Он/Нн)", "Асфальтобетон А22Нн", "Асфальтобетон А16Вн", "Асфальтобетон А5 (Нл/Вл)", "Песок", "Щебень", "Грунт растительный", "Геополотно"], "coefLabels": {"асфальт": "Асфальт", "щебень": "Щебень", "песок": "Песок", "грунт": "Грунт (газон)", "геополотно": "Геополотно", "работа": "Работа"}};
+const COEF_KEYS=["работа","асфальт","песок","щебень","грунт","геополотно"];
+const LS="stroitel_v1";
+let state, positions;
+
+function fresh(){return JSON.parse(JSON.stringify(DATA));}
+function load(){
+  state={materials:{},coefs:{},deliveryCoef:DATA.deliveryCoef};
+  for(const k in DATA.materials) state.materials[k]={...DATA.materials[k]};
+  for(const k in DATA.coefs) state.coefs[k]=DATA.coefs[k];
+  try{const s=JSON.parse(localStorage.getItem(LS));if(s){
+    for(const k in s.materials||{}) if(state.materials[k]) Object.assign(state.materials[k],s.materials[k]);
+    for(const k in s.coefs||{}) state.coefs[k]=s.coefs[k];
+    if(s.deliveryCoef!=null) state.deliveryCoef=s.deliveryCoef;
+  }}catch(e){}
+  positions=fresh().positions;
+}
+function save(){localStorage.setItem(LS,JSON.stringify({materials:state.materials,coefs:state.coefs,deliveryCoef:state.deliveryCoef}));}
+
+const fmt=n=>Math.round(n).toLocaleString('ru-RU');
+const fmt2=n=>n.toLocaleString('ru-RU',{minimumFractionDigits:2,maximumFractionDigits:2});
+function prod(ks){let r=1;for(const k of ks)r*=(state.coefs[k]||1);return r;}
+function matRate(p){if(!p.material)return 0;const m=state.materials[p.material];if(!m)return 0;return (m.price+m.delivery*state.deliveryCoef)*p.rash*prod(p.matCoefs);}
+function workRate(p){return p.workBase*prod(p.workCoefs)*p.workMult;}
+
+/* ---- движок классификации (те же правила, что в базе) ---- */
+function thick(n){const m=n.toLowerCase().match(/толщино[йю]\s*(\d+)\s*мм/);return m?(+m[1])/1000:null;}
+function materialOf(n){n=n.toLowerCase();
+  if(n.includes("асфальтобетон")){for(const[c,k]of[["а32","Асфальтобетон А32 (Он/Нн)"],["а22","Асфальтобетон А22Нн"],["а16","Асфальтобетон А16Вн"],["а5","Асфальтобетон А5 (Нл/Вл)"]])if(n.includes(c))return k;}
+  if(n.includes("геополотн"))return"Геополотно";
+  if(n.includes("щеб"))return"Щебень";
+  if(n.includes("песк")||n.includes("песчан"))return"Песок";
+  if(n.includes("растительн")||n.includes("газон"))return"Грунт растительный";
+  if(n.includes("бортовых камней гп1"))return"Борт ГП1 (в сборе)";
+  if(n.includes("бортовых камней гп2"))return"Борт ГП2 (в сборе)";
+  if(n.includes("бортовых камней гп6"))return"Борт ГП6 (в сборе)";
+  if(n.includes("бр 100.20.8"))return"Борт БР 100.20.8";
+  if(n.includes("дренаж"))return"Дренажная труба";
+  if(n.includes("присоединение"))return"Присоединение (материал)";
+  return null;}
+function classify(name){const n=name.toLowerCase();const t=thick(name);
+  if(n.includes("разработка грунта"))return{material:null,rash:0,matCoefs:[],workBase:300,workCoefs:[],workMult:1};
+  if(n.includes("перемещение")&&n.includes("насыпь"))return{material:null,rash:0,matCoefs:[],workBase:600,workCoefs:[],workMult:1};
+  if(n.includes("перемещение")&&n.includes("складир"))return{material:null,rash:0,matCoefs:[],workBase:650,workCoefs:[],workMult:1};
+  if(n.includes("геополотн"))return{material:"Геополотно",rash:1,matCoefs:["геополотно"],workBase:70,workCoefs:[],workMult:1};
+  if(n.includes("асфальтобетон"))return{material:materialOf(name),rash:t||0.05,matCoefs:["асфальт"],workBase:550,workCoefs:["работа"],workMult:1};
+  if(n.includes("щеб"))return{material:"Щебень",rash:t||0,matCoefs:["щебень"],workBase:2000,workCoefs:["работа"],workMult:t||0};
+  if(n.includes("песк")||n.includes("песчан"))return{material:"Песок",rash:t||0,matCoefs:["работа","песок"],workBase:1100,workCoefs:["работа"],workMult:t||0};
+  if(n.includes("бортовых камней гп1"))return{material:"Борт ГП1 (в сборе)",rash:1,matCoefs:[],workBase:1500,workCoefs:[],workMult:1};
+  if(n.includes("бортовых камней гп2"))return{material:"Борт ГП2 (в сборе)",rash:1,matCoefs:[],workBase:1500,workCoefs:[],workMult:1};
+  if(n.includes("бортовых камней гп6"))return{material:"Борт ГП6 (в сборе)",rash:1,matCoefs:[],workBase:1500,workCoefs:[],workMult:1};
+  if(n.includes("бр 100.20.8"))return{material:"Борт БР 100.20.8",rash:1,matCoefs:["работа"],workBase:750,workCoefs:["работа"],workMult:1};
+  if(n.includes("дренаж"))return{material:"Дренажная труба",rash:1,matCoefs:["работа"],workBase:1300,workCoefs:["работа"],workMult:1};
+  if(n.includes("присоединение"))return{material:"Присоединение (материал)",rash:1,matCoefs:["работа"],workBase:5000,workCoefs:["работа"],workMult:1};
+  if(n.includes("газон"))return{material:"Грунт растительный",rash:0.15,matCoefs:["грунт"],workBase:250,workCoefs:[],workMult:1};
+  return null;}
+
+/* ---- редактор ---- */
+function renderEdit(){
+  let mh="";
+  for(const k of DATA.matShow){const m=state.materials[k];
+    mh+=`<div class="erow"><label>${k}</label>`+
+      `<input class="ed" type="number" value="${m.price}" oninput="setMat('${k}','price',this.value)"><span class="u">₽/${m.unit}</span></div>`;
+  }
+  document.getElementById('matEdit').innerHTML=mh;
+  let ch="";
+  for(const k of COEF_KEYS){ch+=`<div class="crow"><label>${DATA.coefLabels[k]} <span class="u">×</span></label><input class="ed small" type="number" step="0.01" value="${state.coefs[k]}" oninput="setCoef('${k}',this.value)"></div>`;}
+  document.getElementById('coefEdit').innerHTML=ch;
+  document.getElementById('delCoef').value=state.deliveryCoef;
+}
+function setMat(k,f,v){state.materials[k][f]=parseFloat(v)||0;save();render();}
+function setCoef(k,v){state.coefs[k]=parseFloat(v)||0;save();render();}
+function onEdit(){state.deliveryCoef=parseFloat(document.getElementById('delCoef').value)||0;save();render();}
+function onKm(){const km=parseFloat(document.getElementById('km').value)||0;document.getElementById('delCoef').value=(1+km/100).toFixed(2);onEdit();}
+function resetAll(){localStorage.removeItem(LS);load();renderEdit();render();}
+function togglePanel(){document.getElementById('editPanel').classList.toggle('closed');}
+
+/* ---- рендер сметы ---- */
+function render(){
+  const secs={};const order=[];
+  for(const p of positions){if(!secs[p.section]){secs[p.section]=[];order.push(p.section);}secs[p.section].push(p);}
+  let wb="",kb="",work=0,mat=0,total=0,n=0,miss=0;
+  for(const sec of order){
+    const rows=secs[sec];let sub=0;
+    let wrows="",krows="";
+    for(const p of rows){n++;
+      if(p.unmatched){miss++;
+        wrows+=`<tr class="miss"><td class="rn">${n}</td><td class="pos">${esc(p.name)}</td><td class="u2">${p.unit||''}</td><td class="num">${fmt2(p.qty)}</td><td colspan="3" class="warn">нет рецепта в базе — добавьте это КП</td></tr>`;
+        krows+=`<tr class="miss"><td class="rn">${n}</td><td>${esc(p.name)}</td><td class="u2">${p.unit||''}</td><td class="num">${fmt2(p.qty)}</td><td colspan="2" class="warn">нет в базе</td></tr>`;
+        continue;}
+      const w=workRate(p),m=matRate(p),rate=w+m,sum=rate*p.qty;
+      work+=w*p.qty;mat+=m*p.qty;sub+=sum;
+      const bd=p.material?`<div class="bd">${p.material.replace(' (в сборе)','')} · ${fmt(state.materials[p.material].price+state.materials[p.material].delivery*state.deliveryCoef)} ₽${p.rash&&p.rash!=1?' × '+p.rash:''}</div>`:'<div class="bd">только работа</div>';
+      wrows+=`<tr><td class="rn">${n}</td><td class="pos">${esc(p.name)}${bd}</td><td class="u2">${p.unit}</td><td class="num">${fmt2(p.qty)}</td><td class="num">${fmt2(w)}</td><td class="num">${fmt2(m)}</td><td class="num strong">${fmt(sum)}</td></tr>`;
+      krows+=`<tr><td class="rn">${n}</td><td>${esc(p.name)}</td><td class="u2">${p.unit}</td><td class="num">${fmt2(p.qty)}</td><td class="num">${fmt2(rate)}</td><td class="num strong">${fmt(sum)}</td></tr>`;
+    }
+    total+=sub;
+    wb+=`<tbody class="sec"><tr class="sec-h"><td colspan="6">${esc(sec)}</td><td class="num sec-sum">${fmt(sub)} ₽</td></tr>${wrows}</tbody>`;
+    kb+=`<tbody class="sec"><tr class="sec-h"><td colspan="5">${esc(sec)}</td><td class="num sec-sum">${fmt(sub)} ₽</td></tr>${krows}</tbody>`;
+  }
+  kb+=`<tbody><tr class="grand"><td colspan="5">ИТОГО, в т.ч. НДС</td><td class="num">${fmt(total)} ₽</td></tr></tbody>`;
+  document.getElementById('workBody').innerHTML=wb;
+  document.getElementById('kpBody').innerHTML=kb;
+  const okN=positions.length-miss;
+  document.getElementById('kpis').innerHTML=
+    tile('Работа',fmt(work)+' ₽')+tile('Материалы',fmt(mat)+' ₽')+
+    tile('Прямые затраты, итого',fmt(total)+' ₽','total')+
+    tile('Позиций в базе',okN+' <small>из '+positions.length+'</small>');
+  document.getElementById('objN').textContent=positions.length;
+}
+function tile(l,v,c){return `<div class="kpi ${c||''}"><div class="l">${l}</div><div class="v">${v}</div></div>`;}
+function esc(s){return (s||'').replace(/[&<>]/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[x]));}
+
+/* ---- загрузка оферты ---- */
+document.getElementById('file').addEventListener('change',function(e){
+  const f=e.target.files[0];if(!f)return;
+  document.getElementById('fname').textContent='⏳ читаю…';
+  const rd=new FileReader();
+  rd.onload=ev=>{try{
+    const wb=XLSX.read(ev.target.result,{type:'array'});
+    const ws=wb.Sheets[wb.SheetNames[0]];
+    const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:null});
+    const items=parseOffer(rows);
+    if(!items.length){document.getElementById('fname').textContent='⚠ не нашёл позиции в файле';return;}
+    positions=items;
+    document.getElementById('objName').textContent=f.name.replace(/\.(xlsx|xls)$/i,'');
+    document.getElementById('fname').textContent='✓ '+f.name+' · '+items.length+' поз.';
+    render();
+  }catch(err){document.getElementById('fname').textContent='⚠ ошибка чтения файла';}};
+  rd.readAsArrayBuffer(f);
+});
+function norm(s){return (s==null?'':''+s).toLowerCase().replace(/[«»"'()]/g,' ').replace(/\s+/g,' ').trim();}
+function parseOffer(rows){
+  // ищем шапку: строка, где есть «кол» и («ед»)
+  let hr=-1,cn=-1,cu=-1,cq=-1;
+  for(let r=0;r<Math.min(rows.length,25);r++){
+    const cells=rows[r]||[];let hasU=false,hasQ=false;
+    for(let c=0;c<cells.length;c++){const t=norm(cells[c]);if(!t)continue;
+      if(t.includes('ед')&&(t.includes('изм')||t.length<6))hasU=true;
+      if(t.includes('кол'))hasQ=true;}
+    if(hasU&&hasQ){hr=r;
+      for(let c=0;c<cells.length;c++){const t=norm(cells[c]);
+        if(cn<0&&(t.includes('наимен')||t.includes('описан')||t.includes('вид работ')))cn=c;
+        if(cu<0&&t.includes('ед')&&(t.includes('изм')||t.length<6))cu=c;
+        if(cq<0&&t.includes('кол'))cq=c;}
+      break;}
+  }
+  if(hr<0||cn<0||cq<0)return [];
+  const out=[];
+  for(let r=hr+1;r<rows.length;r++){
+    const cells=rows[r]||[];const name=cells[cn];const qty=cells[cq];const unit=cu>=0?cells[cu]:'';
+    if(!name||!(''+name).trim())continue;
+    const q=parseFloat((''+qty).replace(',','.'));if(!isFinite(q))continue;
+    const rec=classify((''+name).trim());
+    if(rec) out.push({i:out.length+1,section:'Загруженная оферта',name:(''+name).trim(),unit:(''+(unit||'')).trim(),qty:q,...rec});
+    else out.push({i:out.length+1,section:'Загруженная оферта',name:(''+name).trim(),unit:(''+(unit||'')).trim(),qty:q,unmatched:true});
+  }
+  return out;
+}
+
+function loadDemo(){positions=fresh().positions;document.getElementById('objName').textContent=DATA.object;document.getElementById('fname').textContent='';render();}
+function setView(v){const kp=v==='kp';document.getElementById('v-work').setAttribute('aria-pressed',!kp);document.getElementById('v-kp').setAttribute('aria-pressed',kp);document.body.classList.toggle('mode-kp',kp);window.scrollTo({top:0,behavior:'smooth'});}
+
+/* init */
+load();
+document.getElementById('objReg').textContent=DATA.region;
+document.getElementById('kpSub').textContent='на выполнение работ · регион '+DATA.region;
+document.getElementById('objName').textContent=DATA.object;
+renderEdit();render();
+</script>
