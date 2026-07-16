@@ -81,7 +81,7 @@ input.ed.small{width:70px}
 .card-h{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:baseline;justify-content:space-between;padding:17px 20px 3px}
 .card-h h3{margin:0;font-size:17px;font-weight:800}.card-h .hint{font-size:12.5px;color:var(--muted)}
 .scroll{overflow-x:auto;padding:8px 6px 4px}
-table{width:100%;border-collapse:collapse;min-width:680px;border:1.5px solid rgba(120,140,160,.5)}
+table{width:100%;border-collapse:collapse;min-width:820px;border:1.5px solid rgba(120,140,160,.5)}
 thead th{font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);font-weight:700;text-align:left;padding:8px 13px;border-bottom:2px solid rgba(120,140,160,.55);border-right:1px solid rgba(120,140,160,.3);background:var(--surface)}
 thead th:last-child{border-right:0}
 thead th.num{text-align:right}
@@ -110,14 +110,14 @@ footer{text-align:center;color:var(--muted);font-size:12px;margin-top:22px}
 
 <div class="wrap">
   <div class="top">
-    <div class="brand"><div class="mark"></div><h1>Строитель · кабинет расчёта КП</h1><span style="font-size:10px;font-weight:700;color:#fff;background:var(--good);padding:3px 8px;border-radius:100px">сборка: v5-зебра</span></div>
-    <div class="verified">Расчёт сверен с исходным КП <b>до рубля</b></div>
+    <div class="brand"><div class="mark"></div><h1>Строитель · кабинет расчёта КП</h1><span style="font-size:10px;font-weight:700;color:#fff;background:var(--good);padding:3px 8px;border-radius:100px">сборка: v6-себестоимость</span></div>
+    <div class="verified">Себестоимость и цена КП считаются <b>автоматически</b></div>
   </div>
 
   <section class="hero">
     <p class="eyebrow">Кабинет расчёта коммерческих предложений</p>
-    <h2>Загрузите оферту — кабинет соберёт цену сам</h2>
-    <p>Оферта заказчика (позиции и объёмы, без цен) превращается в готовое КП. Цены материалов, доставку и коэффициенты вы правите в панели ниже — смета пересчитывается мгновенно.</p>
+    <h2>Загрузите оферту — кабинет соберёт себестоимость и цену КП</h2>
+    <p>Оферта заказчика (позиции и объёмы, без цен) превращается в готовое КП. Цены материалов, доставку, коэффициенты, накладные, резерв и маржу вы правите в панели ниже — смета пересчитывается мгновенно.</p>
     <div class="hero-actions">
       <label class="btn btn-accent">⬆ Загрузить оферту (Excel)
         <input id="file" type="file" accept=".xlsx,.xls" style="display:none">
@@ -130,7 +130,7 @@ footer{text-align:center;color:var(--muted);font-size:12px;margin-top:22px}
 
   <section class="panel" id="editPanel">
     <div class="panel-h" onclick="togglePanel()">
-      <h3>⚙ Цены и коэффициенты <span class="sub">— правьте, всё пересчитается</span></h3>
+      <h3>⚙ Цены, коэффициенты и себестоимость <span class="sub">— правьте, всё пересчитается</span></h3>
       <span class="chev">▾</span>
     </div>
     <div class="panel-b">
@@ -146,7 +146,9 @@ footer{text-align:center;color:var(--muted);font-size:12px;margin-top:22px}
           <h4 style="margin-top:18px">Доставка по удалённости объекта</h4>
           <div class="crow"><label>Расстояние до объекта, км <span class="u">справочно</span></label><input class="ed small" id="km" type="number" value="0" oninput="onKm()"></div>
           <div class="crow"><label>Коэффициент доставки <span class="u">×</span></label><input class="ed small" id="delCoef" type="number" step="0.05" oninput="onEdit()"></div>
-          <p class="hintline">Чем дальше объект — тем выше коэффициент доставки. <button class="reset" onclick="resetAll()">↺ Сбросить к исходным</button></p>
+          <h4 style="margin-top:18px">Себестоимость и прибыль</h4>
+          <div id="financeEdit"></div>
+          <p class="hintline">Чем дальше объект — тем выше коэффициент доставки. Накладные и резерв входят в себестоимость, маржа добавляется сверху. <button class="reset" onclick="resetAll()">↺ Сбросить к исходным</button></p>
         </div>
       </div>
     </div>
@@ -163,9 +165,9 @@ footer{text-align:center;color:var(--muted);font-size:12px;margin-top:22px}
   <div class="kpis" id="kpis"></div>
 
   <div class="card" id="workCard">
-    <div class="card-h"><h3>Смета по разделам</h3><div class="hint">рабочий вид: сверить · ставки за единицу, в т.ч. НДС</div></div>
+    <div class="card-h"><h3>Смета по разделам</h3><div class="hint">рабочий вид: прямые затраты · себестоимость · цена КП</div></div>
     <div class="scroll"><table>
-      <thead><tr><th class="rn">№</th><th>Позиция / из чего собрана</th><th>Ед.</th><th class="num">Кол-во</th><th class="num">Работа ₽/ед</th><th class="num">Матер. ₽/ед</th><th class="num">Сумма ₽</th></tr></thead>
+      <thead><tr><th class="rn">№</th><th>Позиция / из чего собрана</th><th>Ед.</th><th class="num">Кол-во</th><th class="num">Работа ₽/ед</th><th class="num">Матер. ₽/ед</th><th class="num">Себест. ₽/ед</th><th class="num">КП ₽</th></tr></thead>
       <tbody id="workBody"></tbody>
     </table></div>
   </div>
@@ -173,41 +175,55 @@ footer{text-align:center;color:var(--muted);font-size:12px;margin-top:22px}
   <div class="card" id="kpCard">
     <div class="kp-doc-head"><div class="kp-title">Коммерческое предложение</div><div class="kp-sub" id="kpSub"></div></div>
     <div class="scroll"><table>
-      <thead><tr><th class="rn">№</th><th>Наименование работ</th><th>Ед.</th><th class="num">Кол-во</th><th class="num">Цена ₽/ед</th><th class="num">Сумма ₽</th></tr></thead>
+      <thead><tr><th class="rn">№</th><th>Наименование работ</th><th>Ед.</th><th class="num">Кол-во</th><th class="num">Цена КП ₽/ед</th><th class="num">Сумма ₽</th></tr></thead>
       <tbody id="kpBody"></tbody>
     </table></div>
-    <div class="kp-foot">Санкт-Петербург · расчёт на основе проверенных единичных расценок. Цены действительны на дату составления.</div>
+    <div class="kp-foot">Санкт-Петербург · расчёт на основе проверенных единичных расценок. В цене учтены прямые затраты, накладные расходы, резерв и плановая маржа. Цены действительны на дату составления.</div>
   </div>
 
-  <footer>Строитель · цены и коэффициенты — ваши, из реально исполненных смет. Правки сохраняются в этом браузере.</footer>
+  <footer>Строитель · цены, коэффициенты, себестоимость и маржа — ваши, из реально исполненных смет. Правки сохраняются в этом браузере.</footer>
 </div>
 
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <script>
 const DATA = {"object": "Улично-дорожная сеть «Юг Таун»", "region": "Санкт-Петербург", "materials": {"Асфальтобетон А32 (Он/Нн)": {"price": 5990, "delivery": 600, "unit": "т"}, "Асфальтобетон А22Нн": {"price": 5935, "delivery": 600, "unit": "т"}, "Асфальтобетон А16Вн": {"price": 6585, "delivery": 600, "unit": "т"}, "Асфальтобетон А5 (Нл/Вл)": {"price": 6395, "delivery": 600, "unit": "т"}, "Песок": {"price": 1300, "delivery": 0, "unit": "м3"}, "Щебень": {"price": 2000, "delivery": 0, "unit": "м3"}, "Грунт растительный": {"price": 1400, "delivery": 0, "unit": "м3"}, "Геополотно": {"price": 100, "delivery": 0, "unit": "м2"}, "Борт БР 100.20.8": {"price": 1088.119, "delivery": 0, "unit": "м.пог."}, "Дренажная труба": {"price": 773.5, "delivery": 0, "unit": "м.пог."}, "Присоединение (материал)": {"price": 3000, "delivery": 0, "unit": "колодец"}, "Борт ГП1 (в сборе)": {"price": 5668.75, "delivery": 0, "unit": "м.пог."}, "Борт ГП2 (в сборе)": {"price": 6235.25, "delivery": 0, "unit": "м.пог."}, "Борт ГП6 (в сборе)": {"price": 6801.75, "delivery": 0, "unit": "м.пог."}}, "coefs": {"работа": 1.1, "асфальт": 2.5, "песок": 1.15, "щебень": 1.26, "грунт": 1.3, "геополотно": 1.2}, "positions": [{"i": 1, "section": "Земляные работы (Объем грунта в твердом теле)", "name": "Разработка грунта с доработкой и погрузкой", "unit": "м3", "qty": 7378.35, "material": null, "rash": 0, "matCoefs": [], "workBase": 300, "workCoefs": [], "workMult": 1.0}, {"i": 2, "section": "Земляные работы (Объем грунта в твердом теле)", "name": "Перемещение грунта до 1 км, насыпь с уплотнением (под низ благоустройства, в т.ч. разделительная полоса)", "unit": "м3", "qty": 4853.79, "material": null, "rash": 0, "matCoefs": [], "workBase": 600, "workCoefs": [], "workMult": 1.0}, {"i": 3, "section": "Земляные работы (Объем грунта в твердом теле)", "name": "Перемещение грунта до 1 км со складированием", "unit": "м3", "qty": 2524.56, "material": null, "rash": 0, "matCoefs": [], "workBase": 650, "workCoefs": [], "workMult": 1.0}, {"i": 4, "section": "Устройство асфальтобетонного покрытия проездов (тип 1)", "name": "Укладка геополотна (сырье - первичный полипропилен) по ГОСТ Р 55028-2012 P не менее 14 кН/м плотностью 250 г/м²", "unit": "м2", "qty": 8312.8, "material": "Геополотно", "rash": 1.0, "matCoefs": ["геополотно"], "workBase": 70, "workCoefs": [], "workMult": 1.0}, {"i": 5, "section": "Устройство асфальтобетонного покрытия проездов (тип 1)", "name": "Устройство рабочего слоя земляного полотна из песка мелкого (Кф>0,5м/c) по ГОСТ 32824-2014 толщиной 500мм", "unit": "м2", "qty": 8312.8, "material": "Песок", "rash": 0.5, "matCoefs": ["работа", "песок"], "workBase": 1100, "workCoefs": ["работа"], "workMult": 0.5}, {"i": 6, "section": "Устройство асфальтобетонного покрытия проездов (тип 1)", "name": "Укладка геополотна (сырье - первичный полипропилен) по ГОСТ Р 55028-2012 P не менее 14 кН/м плотностью 250 г/м²", "unit": "м2", "qty": 8312.8, "material": "Геополотно", "rash": 1.0, "matCoefs": ["геополотно"], "workBase": 70, "workCoefs": [], "workMult": 1.0}, {"i": 7, "section": "Устройство асфальтобетонного покрытия проездов (тип 1)", "name": "Устройство основания из песка средней крупности (Кф 1м/c) по ГОСТ 32824-2014 толщиной 550мм", "unit": "м2", "qty": 8312.8, "material": "Песок", "rash": 0.55, "matCoefs": ["работа", "песок"], "workBase": 1100, "workCoefs": ["работа"], "workMult": 0.55}, {"i": 8, "section": "Устройство асфальтобетонного покрытия проездов (тип 1)", "name": "Устройство основания из щебеночной смеси с непрерывной гранулометрией 0/63 (Кф 1м/c), размер зерен 63 мм по ГОСТ 70458-2022 толщиной 350мм", "unit": "м2", "qty": 8312.8, "material": "Щебень", "rash": 0.35, "matCoefs": ["щебень"], "workBase": 2000, "workCoefs": ["работа"], "workMult": 0.35}, {"i": 9, "section": "Устройство асфальтобетонного покрытия проездов (тип 1)", "name": "Укладка асфальтобетона А32Он по ГОСТ Р 58406.2-2020 на БНД 70/100 по ГОСТ 33133-2014 толщиной 90мм", "unit": "м2", "qty": 8312.8, "material": "Асфальтобетон А32 (Он/Нн)", "rash": 0.09, "matCoefs": ["асфальт"], "workBase": 550, "workCoefs": ["работа"], "workMult": 1.0}, {"i": 10, "section": "Устройство асфальтобетонного покрытия проездов (тип 1)", "name": "Укладка асфальтобетона А22Нн по ГОСТ Р 58406.2-2020 на БНД 70/100 по ГОСТ 33133-2014 толщиной 60мм (с предварительным проливом битумной эмульсией 0,4 л/м2)", "unit": "м2", "qty": 8312.8, "material": "Асфальтобетон А22Нн", "rash": 0.06, "matCoefs": ["асфальт"], "workBase": 550, "workCoefs": ["работа"], "workMult": 1.0}, {"i": 11, "section": "Устройство асфальтобетонного покрытия проездов (тип 1)", "name": "Укладка асфальтобетона А16Вн по ГОСТ Р 58406.2-2020 на габбро-диабазовом щебне по ГОСТ 8267-93 на ПБВ 60 по ГОСТ Р 52056-2003 толщиной 50мм (с предварительным проливом битумной эмульсией 0,4 л/м2)", "unit": "м2", "qty": 8312.8, "material": "Асфальтобетон А16Вн", "rash": 0.05, "matCoefs": ["асфальт"], "workBase": 550, "workCoefs": ["работа"], "workMult": 1.0}, {"i": 12, "section": "Устройство асфальтобетонного покрытия тротуаров и велодорожек (тип 2, тип 3)", "name": "Укладка геополотна (сырье - первичный полипропилен) по ГОСТ Р 55028-2012 P не менее 14 кН/м плотностью 250 г/м²", "unit": "м2", "qty": 4222.9, "material": "Геополотно", "rash": 1.0, "matCoefs": ["геополотно"], "workBase": 70, "workCoefs": [], "workMult": 1.0}, {"i": 13, "section": "Устройство асфальтобетонного покрытия тротуаров и велодорожек (тип 2, тип 3)", "name": "Устройство рабочего слоя земляного полотна из песка мелкого (Кф>0,5м/c) по ГОСТ 32824-2014 толщиной 530мм", "unit": "м2", "qty": 4222.9, "material": "Песок", "rash": 0.53, "matCoefs": ["работа", "песок"], "workBase": 1100, "workCoefs": ["работа"], "workMult": 0.53}, {"i": 14, "section": "Устройство асфальтобетонного покрытия тротуаров и велодорожек (тип 2, тип 3)", "name": "Устройство основания из песка средней крупности с содержанием пылевато-глинистой фракции 3% по ГОСТ 32824-2014 толщиной 240мм", "unit": "м2", "qty": 4222.9, "material": "Песок", "rash": 0.24, "matCoefs": ["работа", "песок"], "workBase": 1100, "workCoefs": ["работа"], "workMult": 0.24}, {"i": 15, "section": "Устройство асфальтобетонного покрытия тротуаров и велодорожек (тип 2, тип 3)", "name": "Устройство основания из щебеночной смеси с непрерывной гранулометрией 0/63 (Кф 1м/c), размер зерен 63 мм по ГОСТ 70458-2022 толщиной 270мм", "unit": "м2", "qty": 4222.9, "material": "Щебень", "rash": 0.27, "matCoefs": ["щебень"], "workBase": 2000, "workCoefs": ["работа"], "workMult": 0.27}, {"i": 16, "section": "Устройство асфальтобетонного покрытия тротуаров и велодорожек (тип 2, тип 3)", "name": "Укладка асфальтобетона А5Нл по ГОСТ Р 58406.2-2020 на БНД 70/100 по ГОСТ 33133-2014 толщиной 40мм", "unit": "м2", "qty": 4222.9, "material": "Асфальтобетон А5 (Нл/Вл)", "rash": 0.04, "matCoefs": ["асфальт"], "workBase": 550, "workCoefs": ["работа"], "workMult": 1.0}, {"i": 17, "section": "Устройство асфальтобетонного покрытия тротуаров и велодорожек (тип 2, тип 3)", "name": "Укладка асфальтобетона А5Вл по ГОСТ Р 58406.2-2020 на БНД 70/100 по ГОСТ 33133-2014 толщиной 40мм (с предварительным проливом битумной эмульсией 0,4 л/м2)", "unit": "м2", "qty": 4222.9, "material": "Асфальтобетон А5 (Нл/Вл)", "rash": 0.04, "matCoefs": ["асфальт"], "workBase": 550, "workCoefs": ["работа"], "workMult": 1.0}, {"i": 18, "section": "Устройство асфальтобетонного покрытия проездов (тип 4)", "name": "Укладка геополотна (сырье - первичный полипропилен) по ГОСТ Р 55028-2012 P не менее 14 кН/м плотностью 250 г/м²", "unit": "м2", "qty": 123.9, "material": "Геополотно", "rash": 1.0, "matCoefs": ["геополотно"], "workBase": 70, "workCoefs": [], "workMult": 1.0}, {"i": 19, "section": "Устройство асфальтобетонного покрытия проездов (тип 4)", "name": "Устройство рабочего слоя земляного полотна из песка мелкого (Кф>0,5м/c) по ГОСТ 32824-2014 толщиной 620мм", "unit": "м2", "qty": 123.9, "material": "Песок", "rash": 0.62, "matCoefs": ["работа", "песок"], "workBase": 1100, "workCoefs": ["работа"], "workMult": 0.62}, {"i": 20, "section": "Устройство асфальтобетонного покрытия проездов (тип 4)", "name": "Укладка геополотна (сырье - первичный полипропилен) по ГОСТ Р 55028-2012 P не менее 14 кН/м плотностью 250 г/м²", "unit": "м2", "qty": 123.9, "material": "Геополотно", "rash": 1.0, "matCoefs": ["геополотно"], "workBase": 70, "workCoefs": [], "workMult": 1.0}, {"i": 21, "section": "Устройство асфальтобетонного покрытия проездов (тип 4)", "name": "Устройство основания из песка средней крупности (Кф 1м/c) по ГОСТ 32824-2014 толщиной 450мм", "unit": "м2", "qty": 123.9, "material": "Песок", "rash": 0.45, "matCoefs": ["работа", "песок"], "workBase": 1100, "workCoefs": ["работа"], "workMult": 0.45}, {"i": 22, "section": "Устройство асфальтобетонного покрытия проездов (тип 4)", "name": "Устройство основания из щебеночно-песчаной смеси 0/63 (Кф 1м/c), размер зерен 63 мм по ГОСТ 70458-2022 толщиной 320мм", "unit": "м2", "qty": 123.9, "material": "Щебень", "rash": 0.32, "matCoefs": ["щебень"], "workBase": 2000, "workCoefs": ["работа"], "workMult": 0.32}, {"i": 23, "section": "Устройство асфальтобетонного покрытия проездов (тип 4)", "name": "Укладка асфальтобетона А32Нн по ГОСТ Р 58406.2-2020 на БНД 70/100 по ГОСТ 33133-2014 толщиной 80мм", "unit": "м2", "qty": 123.9, "material": "Асфальтобетон А32 (Он/Нн)", "rash": 0.08, "matCoefs": ["асфальт"], "workBase": 550, "workCoefs": ["работа"], "workMult": 1.0}, {"i": 24, "section": "Устройство асфальтобетонного покрытия проездов (тип 4)", "name": "Укладка асфальтобетона А16Вн по ГОСТ Р 58406.2-2020 на габбро-диабазовом щебне по ГОСТ 8267-93 на ПБВ 60 по ГОСТ Р 52056-2003 толщиной 60мм (с предварительным проливом битумной эмульсией 0,4 л/м2)", "unit": "м2", "qty": 123.9, "material": "Асфальтобетон А16Вн", "rash": 0.05, "matCoefs": ["асфальт"], "workBase": 550, "workCoefs": ["работа"], "workMult": 1.0}, {"i": 25, "section": "Устройство бортовых камней", "name": "Устройство бортовых камней ГП1", "unit": "м.пог.", "qty": 2018.0, "material": "Борт ГП1 (в сборе)", "rash": 1.0, "matCoefs": [], "workBase": 1500, "workCoefs": [], "workMult": 1.0}, {"i": 26, "section": "Устройство бортовых камней", "name": "Устройство бортовых камней ГП2", "unit": "м.пог.", "qty": 96.0, "material": "Борт ГП2 (в сборе)", "rash": 1.0, "matCoefs": [], "workBase": 1500, "workCoefs": [], "workMult": 1.0}, {"i": 27, "section": "Устройство бортовых камней", "name": "Устройство бортовых камней ГП6", "unit": "м.пог.", "qty": 60.0, "material": "Борт ГП6 (в сборе)", "rash": 1.0, "matCoefs": [], "workBase": 1500, "workCoefs": [], "workMult": 1.0}, {"i": 28, "section": "Устройство бортовых камней", "name": "Устройство бортовых камней БР 100.20.8", "unit": "м.пог.", "qty": 1984.0, "material": "Борт БР 100.20.8", "rash": 1.0, "matCoefs": ["работа"], "workBase": 750, "workCoefs": ["работа"], "workMult": 1.0}, {"i": 29, "section": "Устройство дорожного дренажа", "name": "Устройство дорожного дренажа из дренажных труб по ГОСТ Р 70628.2-2023 d-110мм в фильтре с щебеночным основанием, обваловкой щебнем, устройством защитно-дренирующей прослойки из нетканого иглопробивного материала", "unit": "м.пог.", "qty": 1023.5, "material": "Щебень", "rash": 0.337639, "matCoefs": ["щебень"], "workBase": 2000, "workCoefs": ["работа"], "workMult": 0.65}, {"i": 30, "section": "Устройство дорожного дренажа", "name": "Присоединение к дождеприемным колодцам трубами d-110 мм с пробивкой отверстий в колодце, с вводом труб в колодец и заделкой пазов труб цементно-песчаным раствором 1:3", "unit": "колодец", "qty": 27.0, "material": "Песок", "rash": 2.006689, "matCoefs": ["работа", "песок"], "workBase": 1100, "workCoefs": ["работа"], "workMult": 4.545455}, {"i": 31, "section": "Устройство газона, в т.ч. разделительная полоса", "name": "Устройство газонов с внесением растительного грунта толщиной 150мм и посевом трав", "unit": "м2", "qty": 7032.4, "material": "Грунт растительный", "rash": 0.15, "matCoefs": ["грунт"], "workBase": 250, "workCoefs": [], "workMult": 1.0}], "deliveryCoef": 1.0, "matShow": ["Асфальтобетон А32 (Он/Нн)", "Асфальтобетон А22Нн", "Асфальтобетон А16Вн", "Асфальтобетон А5 (Нл/Вл)", "Песок", "Щебень", "Грунт растительный", "Геополотно"], "coefLabels": {"асфальт": "Асфальт", "щебень": "Щебень", "песок": "Песок", "грунт": "Грунт (газон)", "геополотно": "Геополотно", "работа": "Работа"}};
 const COEF_KEYS=["работа","асфальт","песок","щебень","грунт","геополотно"];
+const DEFAULT_FINANCE={overheadPct:8,reservePct:3,marginPct:15};
+const FINANCE_FIELDS=[
+  ["overheadPct","Накладные расходы","%"],
+  ["reservePct","Резерв на риски","%"],
+  ["marginPct","Маржа к себестоимости","%"]
+];
 const LS="stroitel_v1";
 let state, positions;
 
 function fresh(){return JSON.parse(JSON.stringify(DATA));}
 function load(){
-  state={materials:{},coefs:{},deliveryCoef:DATA.deliveryCoef};
+  state={materials:{},coefs:{},deliveryCoef:DATA.deliveryCoef,finance:{...DEFAULT_FINANCE}};
   for(const k in DATA.materials) state.materials[k]={...DATA.materials[k]};
   for(const k in DATA.coefs) state.coefs[k]=DATA.coefs[k];
   try{const s=JSON.parse(localStorage.getItem(LS));if(s){
     for(const k in s.materials||{}) if(state.materials[k]) Object.assign(state.materials[k],s.materials[k]);
     for(const k in s.coefs||{}) state.coefs[k]=s.coefs[k];
     if(s.deliveryCoef!=null) state.deliveryCoef=s.deliveryCoef;
+    if(s.finance) Object.assign(state.finance,s.finance);
   }}catch(e){}
   positions=fresh().positions;
 }
-function save(){localStorage.setItem(LS,JSON.stringify({materials:state.materials,coefs:state.coefs,deliveryCoef:state.deliveryCoef}));}
+function save(){localStorage.setItem(LS,JSON.stringify({materials:state.materials,coefs:state.coefs,deliveryCoef:state.deliveryCoef,finance:state.finance}));}
 
 const fmt=n=>Math.round(n).toLocaleString('ru-RU');
 const fmt2=n=>n.toLocaleString('ru-RU',{minimumFractionDigits:2,maximumFractionDigits:2});
 function prod(ks){let r=1;for(const k of ks)r*=(state.coefs[k]||1);return r;}
 function matRate(p){if(!p.material)return 0;const m=state.materials[p.material];if(!m)return 0;return (m.price+m.delivery*state.deliveryCoef)*p.rash*prod(p.matCoefs);}
 function workRate(p){return p.workBase*prod(p.workCoefs)*p.workMult;}
+function moneyPlan(direct){
+  const overhead=direct*((state.finance.overheadPct||0)/100);
+  const reserve=(direct+overhead)*((state.finance.reservePct||0)/100);
+  const cost=direct+overhead+reserve;
+  const price=cost*(1+((state.finance.marginPct||0)/100));
+  return {direct,overhead,reserve,cost,price,profit:price-cost};
+}
 
 /* ---- движок классификации (те же правила, что в базе) ---- */
 function thick(n){const m=n.toLowerCase().match(/толщино[йю]\s*(\d+)\s*мм/);return m?(+m[1])/1000:null;}
@@ -252,10 +268,14 @@ function renderEdit(){
   let ch="";
   for(const k of COEF_KEYS){ch+=`<div class="crow"><label>${DATA.coefLabels[k]} <span class="u">×</span></label><input class="ed small" type="number" step="0.01" value="${state.coefs[k]}" oninput="setCoef('${k}',this.value)"></div>`;}
   document.getElementById('coefEdit').innerHTML=ch;
+  let fh="";
+  for(const [k,label,unit] of FINANCE_FIELDS){fh+=`<div class="crow"><label>${label} <span class="u">${unit}</span></label><input class="ed small" type="number" step="0.5" value="${state.finance[k]}" oninput="setFinance('${k}',this.value)"></div>`;}
+  document.getElementById('financeEdit').innerHTML=fh;
   document.getElementById('delCoef').value=state.deliveryCoef;
 }
 function setMat(k,f,v){state.materials[k][f]=parseFloat(v)||0;save();render();}
 function setCoef(k,v){state.coefs[k]=parseFloat(v)||0;save();render();}
+function setFinance(k,v){state.finance[k]=parseFloat(v)||0;save();render();}
 function onEdit(){state.deliveryCoef=parseFloat(document.getElementById('delCoef').value)||0;save();render();}
 function onKm(){const km=parseFloat(document.getElementById('km').value)||0;document.getElementById('delCoef').value=(1+km/100).toFixed(2);onEdit();}
 function resetAll(){localStorage.removeItem(LS);load();renderEdit();render();}
@@ -265,34 +285,37 @@ function togglePanel(){document.getElementById('editPanel').classList.toggle('cl
 function render(){
   const secs={};const order=[];
   for(const p of positions){if(!secs[p.section]){secs[p.section]=[];order.push(p.section);}secs[p.section].push(p);}
-  let wb="",kb="",work=0,mat=0,total=0,n=0,miss=0;
+  let wb="",kb="",work=0,mat=0,direct=0,overhead=0,reserve=0,cost=0,price=0,profit=0,n=0,miss=0;
   for(const sec of order){
-    const rows=secs[sec];let sub=0;
+    const rows=secs[sec];let subPrice=0;
     let wrows="",krows="";
     for(const p of rows){n++;
       if(p.unmatched){miss++;
-        wrows+=`<tr class="miss"><td class="rn">${n}</td><td class="pos">${esc(p.name)}</td><td class="u2">${p.unit||''}</td><td class="num">${fmt2(p.qty)}</td><td colspan="3" class="warn">нет рецепта в базе — добавьте это КП</td></tr>`;
+        wrows+=`<tr class="miss"><td class="rn">${n}</td><td class="pos">${esc(p.name)}</td><td class="u2">${p.unit||''}</td><td class="num">${fmt2(p.qty)}</td><td colspan="4" class="warn">нет рецепта в базе — добавьте это КП</td></tr>`;
         krows+=`<tr class="miss"><td class="rn">${n}</td><td>${esc(p.name)}</td><td class="u2">${p.unit||''}</td><td class="num">${fmt2(p.qty)}</td><td colspan="2" class="warn">нет в базе</td></tr>`;
         continue;}
-      const w=workRate(p),m=matRate(p),rate=w+m,sum=rate*p.qty;
-      work+=w*p.qty;mat+=m*p.qty;sub+=sum;
+      const w=workRate(p),m=matRate(p),qty=p.qty||0,unitDirect=w+m,line=moneyPlan(unitDirect*qty);
+      const unitCost=qty?line.cost/qty:0,unitPrice=qty?line.price/qty:0;
+      work+=w*qty;mat+=m*qty;direct+=line.direct;overhead+=line.overhead;reserve+=line.reserve;cost+=line.cost;price+=line.price;profit+=line.profit;subPrice+=line.price;
       const bd=p.material?`<div class="bd">${p.material.replace(' (в сборе)','')} · ${fmt(state.materials[p.material].price+state.materials[p.material].delivery*state.deliveryCoef)} ₽${p.rash&&p.rash!=1?' × '+p.rash:''}</div>`:'<div class="bd">только работа</div>';
-      wrows+=`<tr><td class="rn">${n}</td><td class="pos">${esc(p.name)}${bd}</td><td class="u2">${p.unit}</td><td class="num">${fmt2(p.qty)}</td><td class="num">${fmt2(w)}</td><td class="num">${fmt2(m)}</td><td class="num strong">${fmt(sum)}</td></tr>`;
-      krows+=`<tr><td class="rn">${n}</td><td>${esc(p.name)}</td><td class="u2">${p.unit}</td><td class="num">${fmt2(p.qty)}</td><td class="num">${fmt2(rate)}</td><td class="num strong">${fmt(sum)}</td></tr>`;
+      wrows+=`<tr><td class="rn">${n}</td><td class="pos">${esc(p.name)}${bd}</td><td class="u2">${p.unit}</td><td class="num">${fmt2(p.qty)}</td><td class="num">${fmt2(w)}</td><td class="num">${fmt2(m)}</td><td class="num">${fmt2(unitCost)}</td><td class="num strong">${fmt(line.price)}</td></tr>`;
+      krows+=`<tr><td class="rn">${n}</td><td>${esc(p.name)}</td><td class="u2">${p.unit}</td><td class="num">${fmt2(p.qty)}</td><td class="num">${fmt2(unitPrice)}</td><td class="num strong">${fmt(line.price)}</td></tr>`;
     }
-    total+=sub;
-    wb+=`<tbody class="sec"><tr class="sec-h"><td colspan="6">${esc(sec)}</td><td class="num sec-sum">${fmt(sub)} ₽</td></tr>${wrows}</tbody>`;
-    kb+=`<tbody class="sec"><tr class="sec-h"><td colspan="5">${esc(sec)}</td><td class="num sec-sum">${fmt(sub)} ₽</td></tr>${krows}</tbody>`;
+    wb+=`<tbody class="sec"><tr class="sec-h"><td colspan="7">${esc(sec)}</td><td class="num sec-sum">${fmt(subPrice)} ₽</td></tr>${wrows}</tbody>`;
+    kb+=`<tbody class="sec"><tr class="sec-h"><td colspan="5">${esc(sec)}</td><td class="num sec-sum">${fmt(subPrice)} ₽</td></tr>${krows}</tbody>`;
   }
-  kb+=`<tbody><tr class="grand"><td colspan="5">ИТОГО, в т.ч. НДС</td><td class="num">${fmt(total)} ₽</td></tr></tbody>`;
+  kb+=`<tbody><tr class="grand"><td colspan="5">ИТОГО КП, в т.ч. НДС</td><td class="num">${fmt(price)} ₽</td></tr></tbody>`;
   document.getElementById('workBody').innerHTML=wb;
   document.getElementById('kpBody').innerHTML=kb;
   const okN=positions.length-miss;
   document.getElementById('kpis').innerHTML=
     tile('Работа',fmt(work)+' ₽')+tile('Материалы',fmt(mat)+' ₽')+
-    tile('Прямые затраты, итого',fmt(total)+' ₽','total')+
+    tile('Себестоимость',fmt(cost)+' ₽ <small>+'+fmt(overhead+reserve)+' ₽</small>')+
+    tile('КП к выдаче',fmt(price)+' ₽','total')+
+    tile('Плановая прибыль',fmt(profit)+' ₽')+
     tile('Позиций в базе',okN+' <small>из '+positions.length+'</small>');
   document.getElementById('objN').textContent=positions.length;
+  document.getElementById('kpSub').textContent='на выполнение работ · регион '+DATA.region+' · себестоимость '+fmt(cost)+' ₽ · маржа '+fmt2(state.finance.marginPct)+'%';
 }
 function tile(l,v,c){return `<div class="kpi ${c||''}"><div class="l">${l}</div><div class="v">${v}</div></div>`;}
 function esc(s){return (s||'').replace(/[&<>]/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[x]));}
