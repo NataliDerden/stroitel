@@ -74,6 +74,23 @@ input.ed.small{width:70px}
 .kpi .v{font-family:var(--mono);font-size:clamp(18px,2.3vw,23px);font-weight:600;margin-top:5px}
 .kpi .v small{font-size:12px;color:var(--muted)}
 .kpi.total{background:var(--sec);border-color:var(--sec)}.kpi.total .l{color:var(--sec-ink)}.kpi.total .v{color:#fff}.kpi.total .v small{color:var(--sec-ink)}
+/* analysis */
+.analysis-grid{display:grid;grid-template-columns:1fr 1.15fr;gap:18px;padding:4px 20px 20px}
+@media(max-width:900px){.analysis-grid{grid-template-columns:1fr}}
+.compare-stack{display:grid;gap:10px}
+.bar-row{display:grid;grid-template-columns:minmax(120px,.75fr) 1.6fr auto;gap:10px;align-items:center;font-size:12.5px}
+.bar-label{color:var(--muted);font-weight:700}
+.bar-track{height:18px;background:var(--surface-2);border:1px solid var(--line);border-radius:100px;overflow:hidden}
+.bar-fill{height:100%;border-radius:100px;background:var(--accent)}
+.bar-value{font-family:var(--mono);font-weight:700;white-space:nowrap}
+.analysis-note{background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:12px 14px;color:var(--muted);font-size:13px}
+.analysis-note b{color:var(--ink)}
+.mini-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+@media(max-width:680px){.mini-kpis{grid-template-columns:1fr}}
+.mini-kpi{background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:11px 12px}
+.mini-kpi .l{font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:800}
+.mini-kpi .v{font-family:var(--mono);font-weight:800;margin-top:3px}
+.saving-table{min-width:760px}
 /* toolbar */
 .toolbar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin:0 0 14px}
 /* table card */
@@ -103,6 +120,7 @@ tr.grand td.num{font-family:var(--mono)}
 .kp-foot{padding:13px 20px 18px;color:var(--muted);font-size:12px}
 #kpCard{display:none}
 body.mode-kp #workCard,body.mode-kp .kpis,body.mode-kp .panel,body.mode-kp .flow{display:none}
+body.mode-kp #analysisCard{display:none}
 body.mode-kp #kpCard{display:block}
 footer{text-align:center;color:var(--muted);font-size:12px;margin-top:22px}
 @media print{body{background:#fff}.top,.hero,.panel,.kpis,.toolbar,.seg,.btn{display:none!important}.card{box-shadow:none;border:1px solid #e5e8ec}}
@@ -164,6 +182,25 @@ footer{text-align:center;color:var(--muted);font-size:12px;margin-top:22px}
 
   <div class="kpis" id="kpis"></div>
 
+  <div class="card" id="analysisCard">
+    <div class="card-h"><h3>Аналитика себестоимости</h3><div class="hint">сравнение с фактом снабжения 112 млн и целью 100 млн</div></div>
+    <div class="analysis-grid">
+      <div>
+        <div class="compare-stack" id="costChart"></div>
+        <div class="mini-kpis" id="gapCards"></div>
+      </div>
+      <div>
+        <div class="analysis-note" id="analysisNote"></div>
+        <div class="scroll" style="padding:12px 0 0">
+          <table class="saving-table">
+            <thead><tr><th>Зона экономии</th><th>Действие</th><th class="num">База</th><th class="num">Экономия</th></tr></thead>
+            <tbody id="savingBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="card" id="workCard">
     <div class="card-h"><h3>Смета по разделам</h3><div class="hint">рабочий вид: прямые затраты · себестоимость · цена КП</div></div>
     <div class="scroll"><table>
@@ -194,6 +231,7 @@ const FINANCE_FIELDS=[
   ["reservePct","Резерв на риски","%"],
   ["marginPct","Маржа к себестоимости","%"]
 ];
+const BENCHMARK={actualCost:112000000,targetCost:100000000};
 const LS="stroitel_v1";
 let state, positions;
 
@@ -214,6 +252,7 @@ function save(){localStorage.setItem(LS,JSON.stringify({materials:state.material
 
 const fmt=n=>Math.round(n).toLocaleString('ru-RU');
 const fmt2=n=>n.toLocaleString('ru-RU',{minimumFractionDigits:2,maximumFractionDigits:2});
+const mln=n=>(n/1000000).toLocaleString('ru-RU',{minimumFractionDigits:1,maximumFractionDigits:1})+' млн ₽';
 function prod(ks){let r=1;for(const k of ks)r*=(state.coefs[k]||1);return r;}
 function matRate(p){if(!p.material)return 0;const m=state.materials[p.material];if(!m)return 0;return (m.price+m.delivery*state.deliveryCoef)*p.rash*prod(p.matCoefs);}
 function workRate(p){return p.workBase*prod(p.workCoefs)*p.workMult;}
@@ -281,10 +320,56 @@ function onKm(){const km=parseFloat(document.getElementById('km').value)||0;docu
 function resetAll(){localStorage.removeItem(LS);load();renderEdit();render();}
 function togglePanel(){document.getElementById('editPanel').classList.toggle('closed');}
 
+function lineDirect(p){
+  if(!p||p.unmatched)return 0;
+  return (workRate(p)+matRate(p))*(p.qty||0);
+}
+function renderAnalysis(m){
+  const actual=BENCHMARK.actualCost,target=BENCHMARK.targetCost;
+  const max=Math.max(m.cost,m.direct,actual,target);
+  const bars=[
+    ['Модель: прямые',m.direct,'#7f96aa'],
+    ['Модель: себестоимость',m.cost,'var(--accent)'],
+    ['Факт снабжения',actual,'var(--good)'],
+    ['Цель',target,'var(--sec)']
+  ];
+  document.getElementById('costChart').innerHTML=bars.map(([label,val,color])=>
+    `<div class="bar-row"><div class="bar-label">${label}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.max(3,val/max*100).toFixed(1)}%;background:${color}"></div></div><div class="bar-value">${mln(val)}</div></div>`
+  ).join('');
+
+  const modelVsActual=m.cost-actual;
+  const directVsActual=m.direct-actual;
+  const gapToTarget=actual-target;
+  document.getElementById('gapCards').innerHTML=
+    `<div class="mini-kpi"><div class="l">Завышение модели</div><div class="v">${mln(modelVsActual)}</div></div>`+
+    `<div class="mini-kpi"><div class="l">Разница прямых</div><div class="v">${mln(directVsActual)}</div></div>`+
+    `<div class="mini-kpi"><div class="l">Добрать до цели</div><div class="v">${mln(gapToTarget)}</div></div>`;
+
+  const road1=m.sections['Устройство асфальтобетонного покрытия проездов (тип 1)']?.direct||0;
+  const walk=m.sections['Устройство асфальтобетонного покрытия тротуаров и велодорожек (тип 2, тип 3)']?.direct||0;
+  const gp1=positions.find(p=>p.i===25);
+  const geoDuplicate=positions.find(p=>p.i===6);
+  const plan=[
+    ['Проезды тип 1','переторговать асфальт, песок, щебень и работу пакетом; цель -10% по разделу',road1,road1*.10],
+    ['Борт ГП1','проверить поставщика/монтаж и разбить материал с работой; цель -8%',lineDirect(gp1),lineDirect(gp1)*.08],
+    ['Тротуары и велодорожки','согласовать фактические ставки по слоям основания и асфальту; цель -5%',walk,walk*.05],
+    ['Геополотно поз. 4/6','проверить, не задвоена ли одинаковая строка на один объём 8 312,8 м²',lineDirect(geoDuplicate),lineDirect(geoDuplicate)]
+  ];
+  const totalPlan=plan.reduce((s,r)=>s+r[3],0);
+  document.getElementById('savingBody').innerHTML=plan.map(([zone,action,base,economy])=>
+    `<tr><td>${zone}</td><td>${action}</td><td class="num">${mln(base)}</td><td class="num strong">${mln(economy)}</td></tr>`
+  ).join('')+`<tr class="grand"><td colspan="3">ИТОГО потенциал к проверке</td><td class="num">${mln(totalPlan)}</td></tr>`;
+
+  document.getElementById('analysisNote').innerHTML=
+    `Ваш факт <b>${mln(actual)}</b> нужно сравнивать прежде всего с прямыми затратами модели <b>${mln(m.direct)}</b>, а не с управленческой себестоимостью <b>${mln(m.cost)}</b>. `+
+    `В модели сверху сидят накладные и резерв <b>${mln(m.overhead+m.reserve)}</b>, а также защитные коэффициенты материалов. До цели <b>${mln(target)}</b> от факта нужно добрать <b>${mln(gapToTarget)}</b>; таблица ниже даёт проверяемый потенциал <b>${mln(totalPlan)}</b>.`;
+}
+
 /* ---- рендер сметы ---- */
 function render(){
   const secs={};const order=[];
   for(const p of positions){if(!secs[p.section]){secs[p.section]=[];order.push(p.section);}secs[p.section].push(p);}
+  const sectionTotals={};
   let wb="",kb="",work=0,mat=0,direct=0,overhead=0,reserve=0,cost=0,price=0,profit=0,n=0,miss=0;
   for(const sec of order){
     const rows=secs[sec];let subPrice=0;
@@ -297,6 +382,8 @@ function render(){
       const w=workRate(p),m=matRate(p),qty=p.qty||0,unitDirect=w+m,line=moneyPlan(unitDirect*qty);
       const unitCost=qty?line.cost/qty:0,unitPrice=qty?line.price/qty:0;
       work+=w*qty;mat+=m*qty;direct+=line.direct;overhead+=line.overhead;reserve+=line.reserve;cost+=line.cost;price+=line.price;profit+=line.profit;subPrice+=line.price;
+      sectionTotals[sec]??={direct:0,cost:0,price:0};
+      sectionTotals[sec].direct+=line.direct;sectionTotals[sec].cost+=line.cost;sectionTotals[sec].price+=line.price;
       const bd=p.material?`<div class="bd">${p.material.replace(' (в сборе)','')} · ${fmt(state.materials[p.material].price+state.materials[p.material].delivery*state.deliveryCoef)} ₽${p.rash&&p.rash!=1?' × '+p.rash:''}</div>`:'<div class="bd">только работа</div>';
       wrows+=`<tr><td class="rn">${n}</td><td class="pos">${esc(p.name)}${bd}</td><td class="u2">${p.unit}</td><td class="num">${fmt2(p.qty)}</td><td class="num">${fmt2(w)}</td><td class="num">${fmt2(m)}</td><td class="num">${fmt2(unitCost)}</td><td class="num strong">${fmt(line.price)}</td></tr>`;
       krows+=`<tr><td class="rn">${n}</td><td>${esc(p.name)}</td><td class="u2">${p.unit}</td><td class="num">${fmt2(p.qty)}</td><td class="num">${fmt2(unitPrice)}</td><td class="num strong">${fmt(line.price)}</td></tr>`;
@@ -316,6 +403,7 @@ function render(){
     tile('Позиций в базе',okN+' <small>из '+positions.length+'</small>');
   document.getElementById('objN').textContent=positions.length;
   document.getElementById('kpSub').textContent='на выполнение работ · регион '+DATA.region+' · себестоимость '+fmt(cost)+' ₽ · маржа '+fmt2(state.finance.marginPct)+'%';
+  renderAnalysis({work,mat,direct,overhead,reserve,cost,price,profit,sections:sectionTotals});
 }
 function tile(l,v,c){return `<div class="kpi ${c||''}"><div class="l">${l}</div><div class="v">${v}</div></div>`;}
 function esc(s){return (s||'').replace(/[&<>]/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[x]));}
